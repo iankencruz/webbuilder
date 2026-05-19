@@ -1,5 +1,5 @@
 package oauth
 
-type Provider struct {
-	Name string
+type Provider interface {
+	Name() string
 }
