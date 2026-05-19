@@ -11,6 +11,7 @@ type Config struct {
 	DatabaseURL     string
 	SessionLifetime time.Duration
 	SessionSecure   bool
+	SessionCookie   string
 }
 
 func Load() Config {
@@ -19,6 +20,7 @@ func Load() Config {
 		DatabaseURL:     getEnv("DATABASE_URL", "postgres://postgres:postgres@localhost:5432/webbuilder?sslmode=disable"),
 		SessionLifetime: getEnvDuration("SESSION_LIFETIME_HOURS", 24) * time.Hour,
 		SessionSecure:   getEnvBool("SESSION_COOKIE_SECURE", true),
+		SessionCookie:   getEnv("SESSION_COOKIE_NAME", "webbuilder_session"),
 	}
 }
 

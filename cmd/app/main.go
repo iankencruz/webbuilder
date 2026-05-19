@@ -36,7 +36,7 @@ func main() {
 		log.Fatalf("run migrations: %v", err)
 	}
 
-	sessionManager := session.NewManager(pool, cfg.SessionLifetime, cfg.SessionSecure)
+	sessionManager := session.NewManager(pool, cfg.SessionLifetime, cfg.SessionSecure, cfg.SessionCookie)
 	queries := repository.New(pool)
 	authService := service.NewAuthService(queries)
 	authHandler := handler.NewAuthHandler(authService, sessionManager)

@@ -10,7 +10,7 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-func NewManager(pool *pgxpool.Pool, lifetime time.Duration, secure bool) *scs.SessionManager {
+func NewManager(pool *pgxpool.Pool, lifetime time.Duration, secure bool, cookieName string) *scs.SessionManager {
 	manager := scs.New()
 	manager.Store = pgxstore.New(pool)
 	manager.Lifetime = lifetime
@@ -19,7 +19,7 @@ func NewManager(pool *pgxpool.Pool, lifetime time.Duration, secure bool) *scs.Se
 	manager.Cookie.Secure = secure
 	manager.Cookie.SameSite = http.SameSiteLaxMode
 	manager.Cookie.Path = "/"
-	manager.Cookie.Name = "webbuilder_session"
+	manager.Cookie.Name = cookieName
 	return manager
 }
 
