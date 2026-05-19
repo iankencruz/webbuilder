@@ -44,7 +44,7 @@ func TestRequireAuth_AllowsAuthenticatedSession(t *testing.T) {
 	if err != nil {
 		t.Fatalf("load session: %v", err)
 	}
-	sessionManager.Put(ctx, "user_id", 1)
+	sessionManager.Put(ctx, "user_id", "1")
 	req = req.WithContext(ctx)
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
