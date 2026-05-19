@@ -1,0 +1,26 @@
+version: '3'
+
+tasks:
+  run:
+    cmds:
+      - go run ./cmd/app
+
+  build:
+    cmds:
+      - go build ./...
+
+  test:
+    cmds:
+      - go test ./...
+
+  sqlc:
+    cmds:
+      - sqlc generate -f sqlc.yml
+
+  migrate-up:
+    cmds:
+      - goose -dir db/migrations postgres "${DATABASE_URL}" up
+
+  migrate-create:
+    cmds:
+      - goose -dir db/migrations create {{.NAME}} sql
