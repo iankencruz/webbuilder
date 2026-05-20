@@ -6,16 +6,27 @@ import (
 	"time"
 )
 
+type OIDCProvider struct {
+	Name         string
+	IssuerURL    string
+	ClientID     string
+	ClientSecret string
+	RedirectURL  string
+	Scopes       []string
+	PostLoginURL string // configurable per provider
+}
+
 type Config struct {
 	Addr            string
 	DatabaseURL     string
 	SessionLifetime time.Duration
 	SessionSecure   bool
 	SessionCookie   string
+	OIDCProvider    map[string]OIDCProvider
 }
 
-func Load() Config {
-	return Config{
+func Load() *Config {
+	return &Config{
 		Addr:            getEnv("APP_ADDR", ":8080"),
 		DatabaseURL:     getEnv("DATABASE_URL", "postgres://user:pass@localhost:5432/app?sslmode=disable"),
 		SessionLifetime: getEnvDuration("SESSION_LIFETIME_HOURS", 24) * time.Hour,

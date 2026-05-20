@@ -1,19 +1,21 @@
--- name: CreateUser :one
-INSERT INTO users (
-  email,
-  password_hash
-) VALUES (
-  $1,
-  $2
-)
-RETURNING id, email, password_hash, created_at;
-
--- name: GetUserByEmail :one
-SELECT id, email, password_hash, created_at
-FROM users
-WHERE email = $1;
+-- name: GetUserBySub :one
+SELECT * FROM users
+WHERE sub = $1 LIMIT 1;
 
 -- name: GetUserByID :one
-SELECT id, email, password_hash, created_at
-FROM users
-WHERE id = $1;
+SELECT * FROM users
+WHERE id = $1 LIMIT 1;
+
+-- name: CreateUser :one
+INSERT INTO users (sub, provider, email, name, avatar_url)
+VALUES ($1, $2, $3, $4, $5)
+RETURNING *;
+
+-- name: UpdateUser :one
+UPDATE users
+SET email = $2,
+    name = $3,
+    avatar_url = $4,
+    updated_at = NOW()
+WHERE sub = $1
+RETURNING *;

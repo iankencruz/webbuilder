@@ -10,6 +10,7 @@ import (
 	"github.com/iankencruz/webbuilder/internal/config"
 	"github.com/iankencruz/webbuilder/internal/db"
 	"github.com/iankencruz/webbuilder/internal/handler"
+	"github.com/iankencruz/webbuilder/internal/oidc"
 	"github.com/iankencruz/webbuilder/internal/repository"
 	"github.com/iankencruz/webbuilder/internal/server"
 	"github.com/iankencruz/webbuilder/internal/service"
@@ -36,11 +37,16 @@ func main() {
 		log.Fatalf("run migrations: %v", err)
 	}
 
+	oidcRegistry, err := oidc.NewRegistry(ctx, cfg)
+	if err != nil {
+		log.Fatalf("build oidc registry: %v", err)
+	}
+
 	sessionManager := session.NewManager(pool, cfg.SessionLifetime, cfg.SessionSecure, cfg.SessionCookie)
 	queries := repository.New(pool)
 	authService := service.NewAuthService(queries)
-	authHandler := handler.NewAuthHandler(authService, sessionManager)
-	app := server.New(cfg, authHandler, sessionManager)
+	authHandler := handler.NewAuthHandler(authService, sessionManager, oidcRegistry)
+	app := server.New(cfg, authHandler, sessionManager, oidcRegistry)
 
 	if err := app.Start(); err != nil {
 		log.Fatalf("start server: %v", err)

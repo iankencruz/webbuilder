@@ -15,8 +15,12 @@ type Session struct {
 }
 
 type User struct {
-	ID           int64              `db:"id" json:"id"`
-	Email        string             `db:"email" json:"email"`
-	PasswordHash string             `db:"password_hash" json:"-"`
-	CreatedAt    pgtype.Timestamptz `db:"created_at" json:"created_at"`
+	ID        int64              `db:"id" json:"id"`
+	Sub       string             `db:"sub" json:"sub"`
+	Provider  string             `db:"provider" json:"provider"`
+	Email     string             `db:"email" json:"email"`
+	Name      pgtype.Text        `db:"name" json:"name"`
+	AvatarUrl pgtype.Text        `db:"avatar_url" json:"avatar_url"`
+	CreatedAt pgtype.Timestamptz `db:"created_at" json:"created_at"`
+	UpdatedAt pgtype.Timestamptz `db:"updated_at" json:"updated_at"`
 }

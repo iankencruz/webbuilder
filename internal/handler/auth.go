@@ -1,65 +1,125 @@
 package handler
 
 import (
-	"errors"
+	"crypto/rand"
+	"encoding/base64"
 	"net/http"
-	"strconv"
 
 	"github.com/alexedwards/scs/v2"
-	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/labstack/echo/v4"
+	"golang.org/x/oauth2"
 
+	"github.com/iankencruz/webbuilder/internal/oidc"
 	"github.com/iankencruz/webbuilder/internal/service"
 )
 
 type AuthHandler struct {
-	authService *service.AuthService
-	sessions    *scs.SessionManager
+	authService  *service.AuthService
+	sessions     *scs.SessionManager
+	oidcRegistry *oidc.Registry
 }
 
-func NewAuthHandler(authService *service.AuthService, sessions *scs.SessionManager) *AuthHandler {
-	return &AuthHandler{authService: authService, sessions: sessions}
-}
-
-type authRequest struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
-}
-
-func (h *AuthHandler) Register(c echo.Context) error {
-	var req authRequest
-	if err := c.Bind(&req); err != nil {
-		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid payload"})
+func NewAuthHandler(authService *service.AuthService, sessions *scs.SessionManager, oidcRegistry *oidc.Registry) *AuthHandler {
+	return &AuthHandler{
+		authService:  authService,
+		sessions:     sessions,
+		oidcRegistry: oidcRegistry,
 	}
-	if req.Email == "" || req.Password == "" {
-		return c.JSON(http.StatusBadRequest, map[string]string{"error": "email and password are required"})
+}
+
+func (h *AuthHandler) OAuthLogin(c echo.Context) error {
+	providerName := c.Param("provider")
+
+	provider, ok := h.oidcRegistry.Get(providerName)
+	if !ok {
+		return c.JSON(http.StatusNotFound, map[string]string{"error": "unknown provider"})
 	}
 
-	user, err := h.authService.Register(c.Request().Context(), req.Email, req.Password)
+	state, err := generateState()
 	if err != nil {
-		var pgErr *pgconn.PgError
-		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
-			return c.JSON(http.StatusConflict, map[string]string{"error": "email already registered"})
-		}
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "failed to register"})
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "failed to generate state"})
 	}
 
-	return c.JSON(http.StatusCreated, map[string]interface{}{"id": user.ID, "email": user.Email})
+	nonce, err := generateState() // same random generation, different purpose
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "failed to generate nonce"})
+	}
+
+	h.sessions.Put(c.Request().Context(), "oauth_state", state)
+	h.sessions.Put(c.Request().Context(), "oauth_nonce", nonce)
+	h.sessions.Put(c.Request().Context(), "oauth_provider", providerName)
+
+	url := provider.Config.AuthCodeURL(
+		state,
+		oauth2.SetAuthURLParam("nonce", nonce),
+	)
+
+	return c.Redirect(http.StatusTemporaryRedirect, url)
 }
 
-func (h *AuthHandler) Login(c echo.Context) error {
-	var req authRequest
-	if err := c.Bind(&req); err != nil {
-		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid payload"})
+func (h *AuthHandler) OAuthCallback(c echo.Context) error {
+	ctx := c.Request().Context()
+
+	// retrieve and pop state, nonce, provider from session
+	storedState := h.sessions.PopString(ctx, "oauth_state")
+	storedNonce := h.sessions.PopString(ctx, "oauth_nonce")
+	providerName := h.sessions.PopString(ctx, "oauth_provider")
+
+	// validate state
+	if c.QueryParam("state") != storedState || storedState == "" {
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "invalid state"})
 	}
 
-	user, err := h.authService.Login(c.Request().Context(), req.Email, req.Password)
+	provider, ok := h.oidcRegistry.Get(providerName)
+	if !ok {
+		return c.JSON(http.StatusNotFound, map[string]string{"error": "unknown provider"})
+	}
+
+	// exchange code for tokens
+	token, err := provider.Config.Exchange(ctx, c.QueryParam("code"))
 	if err != nil {
-		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "invalid credentials"})
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "failed to exchange token"})
 	}
 
-	h.sessions.Put(c.Request().Context(), "user_id", strconv.FormatInt(user.ID, 10))
-	return c.JSON(http.StatusOK, map[string]interface{}{"id": user.ID, "email": user.Email})
+	// extract raw id_token
+	rawIDToken, ok := token.Extra("id_token").(string)
+	if !ok {
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "missing id_token"})
+	}
+
+	// verify id token
+	idToken, err := provider.Verifier.Verify(ctx, rawIDToken)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "invalid id_token"})
+	}
+
+	// extract claims
+	var claims struct {
+		Sub     string `json:"sub"`
+		Email   string `json:"email"`
+		Name    string `json:"name"`
+		Picture string `json:"picture"`
+		Nonce   string `json:"nonce"`
+	}
+	if err := idToken.Claims(&claims); err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "failed to parse claims"})
+	}
+
+	// validate nonce
+	if claims.Nonce != storedNonce || storedNonce == "" {
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "invalid nonce"})
+	}
+
+	// find or create user
+	user, err := h.authService.FindOrCreateUser(ctx, claims.Sub, providerName, claims.Email, claims.Name, claims.Picture)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "failed to find or create user"})
+	}
+
+	// create session
+	h.sessions.Put(ctx, "user_id", user.ID)
+
+	return c.Redirect(http.StatusTemporaryRedirect, provider.PostLoginURL)
 }
 
 func (h *AuthHandler) Logout(c echo.Context) error {
@@ -68,9 +128,8 @@ func (h *AuthHandler) Logout(c echo.Context) error {
 }
 
 func (h *AuthHandler) Me(c echo.Context) error {
-	userIDValue := h.sessions.GetString(c.Request().Context(), "user_id")
-	userID, err := strconv.ParseInt(userIDValue, 10, 64)
-	if err != nil {
+	userID := h.sessions.GetInt64(c.Request().Context(), "user_id")
+	if userID == 0 {
 		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "unauthorized"})
 	}
 
@@ -79,5 +138,13 @@ func (h *AuthHandler) Me(c echo.Context) error {
 		return c.JSON(http.StatusNotFound, map[string]string{"error": "user not found"})
 	}
 
-	return c.JSON(http.StatusOK, map[string]interface{}{"id": user.ID, "email": user.Email})
+	return c.JSON(http.StatusOK, map[string]any{"id": user.ID, "email": user.Email})
+}
+
+func generateState() (string, error) {
+	b := make([]byte, 16)
+	if _, err := rand.Read(b); err != nil {
+		return "", err
+	}
+	return base64.URLEncoding.EncodeToString(b), nil
 }

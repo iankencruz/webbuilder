@@ -3,46 +3,52 @@ package service
 import (
 	"context"
 	"errors"
-	"strings"
-
-	"golang.org/x/crypto/bcrypt"
+	"fmt"
 
 	"github.com/iankencruz/webbuilder/internal/repository"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 var ErrInvalidCredentials = errors.New("invalid credentials")
 
-type AuthService struct {
-	repo *repository.Queries
+type AuthRepository interface {
+	GetUserByID(ctx context.Context, id int64) (repository.User, error)
+	GetUserBySub(ctx context.Context, sub string) (repository.User, error)
+	CreateUser(ctx context.Context, arg repository.CreateUserParams) (repository.User, error)
+	UpdateUser(ctx context.Context, arg repository.UpdateUserParams) (repository.User, error)
 }
 
-func NewAuthService(repo *repository.Queries) *AuthService {
+type AuthService struct {
+	repo AuthRepository
+}
+
+func NewAuthService(repo AuthRepository) *AuthService {
 	return &AuthService{repo: repo}
 }
 
-func (s *AuthService) Register(ctx context.Context, email, password string) (repository.User, error) {
-	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-	if err != nil {
-		return repository.User{}, err
+func (s *AuthService) FindOrCreateUser(ctx context.Context, sub, provider, email, name, avatarURL string) (repository.User, error) {
+	_, err := s.repo.GetUserBySub(ctx, sub)
+	if err == nil {
+		return s.repo.UpdateUser(ctx, repository.UpdateUserParams{
+			Sub:       sub,
+			Email:     email,
+			Name:      pgtype.Text{String: name, Valid: name != ""},
+			AvatarUrl: pgtype.Text{String: avatarURL, Valid: avatarURL != ""},
+		})
+	}
+
+	if !errors.Is(err, pgx.ErrNoRows) {
+		return repository.User{}, fmt.Errorf("looking up user by sub: %w", err)
 	}
 
 	return s.repo.CreateUser(ctx, repository.CreateUserParams{
-		Email:        strings.TrimSpace(strings.ToLower(email)),
-		PasswordHash: string(hash),
+		Sub:       sub,
+		Provider:  provider,
+		Email:     email,
+		Name:      pgtype.Text{String: name, Valid: name != ""},
+		AvatarUrl: pgtype.Text{String: avatarURL, Valid: avatarURL != ""},
 	})
-}
-
-func (s *AuthService) Login(ctx context.Context, email, password string) (repository.User, error) {
-	user, err := s.repo.GetUserByEmail(ctx, strings.TrimSpace(strings.ToLower(email)))
-	if err != nil {
-		return repository.User{}, ErrInvalidCredentials
-	}
-
-	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password)); err != nil {
-		return repository.User{}, ErrInvalidCredentials
-	}
-
-	return user, nil
 }
 
 func (s *AuthService) GetByID(ctx context.Context, id int64) (repository.User, error) {

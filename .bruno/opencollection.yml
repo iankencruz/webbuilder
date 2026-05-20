@@ -13,6 +13,18 @@ config:
         username: ""
         password: ""
       bypassProxy: ""
+
+request:
+  auth:
+    type: oauth2
+    flow: authorization_code
+    credentials:
+      placement: body
+    tokenConfig:
+      id: credentials
+      placement:
+        header: Bearer
+      source: access_token
 bundled: false
 extensions:
   bruno:

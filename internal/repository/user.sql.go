@@ -7,58 +7,49 @@ package repository
 
 import (
 	"context"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const createUser = `-- name: CreateUser :one
-INSERT INTO users (
-  email,
-  password_hash
-) VALUES (
-  $1,
-  $2
-)
-RETURNING id, email, password_hash, created_at
+INSERT INTO users (sub, provider, email, name, avatar_url)
+VALUES ($1, $2, $3, $4, $5)
+RETURNING id, sub, provider, email, name, avatar_url, created_at, updated_at
 `
 
 type CreateUserParams struct {
-	Email        string `db:"email" json:"email"`
-	PasswordHash string `db:"password_hash" json:"-"`
+	Sub       string      `db:"sub" json:"sub"`
+	Provider  string      `db:"provider" json:"provider"`
+	Email     string      `db:"email" json:"email"`
+	Name      pgtype.Text `db:"name" json:"name"`
+	AvatarUrl pgtype.Text `db:"avatar_url" json:"avatar_url"`
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
-	row := q.db.QueryRow(ctx, createUser, arg.Email, arg.PasswordHash)
-	var i User
-	err := row.Scan(
-		&i.ID,
-		&i.Email,
-		&i.PasswordHash,
-		&i.CreatedAt,
+	row := q.db.QueryRow(ctx, createUser,
+		arg.Sub,
+		arg.Provider,
+		arg.Email,
+		arg.Name,
+		arg.AvatarUrl,
 	)
-	return i, err
-}
-
-const getUserByEmail = `-- name: GetUserByEmail :one
-SELECT id, email, password_hash, created_at
-FROM users
-WHERE email = $1
-`
-
-func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error) {
-	row := q.db.QueryRow(ctx, getUserByEmail, email)
 	var i User
 	err := row.Scan(
 		&i.ID,
+		&i.Sub,
+		&i.Provider,
 		&i.Email,
-		&i.PasswordHash,
+		&i.Name,
+		&i.AvatarUrl,
 		&i.CreatedAt,
+		&i.UpdatedAt,
 	)
 	return i, err
 }
 
 const getUserByID = `-- name: GetUserByID :one
-SELECT id, email, password_hash, created_at
-FROM users
-WHERE id = $1
+SELECT id, sub, provider, email, name, avatar_url, created_at, updated_at FROM users
+WHERE id = $1 LIMIT 1
 `
 
 func (q *Queries) GetUserByID(ctx context.Context, id int64) (User, error) {
@@ -66,9 +57,72 @@ func (q *Queries) GetUserByID(ctx context.Context, id int64) (User, error) {
 	var i User
 	err := row.Scan(
 		&i.ID,
+		&i.Sub,
+		&i.Provider,
 		&i.Email,
-		&i.PasswordHash,
+		&i.Name,
+		&i.AvatarUrl,
 		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const getUserBySub = `-- name: GetUserBySub :one
+SELECT id, sub, provider, email, name, avatar_url, created_at, updated_at FROM users
+WHERE sub = $1 LIMIT 1
+`
+
+func (q *Queries) GetUserBySub(ctx context.Context, sub string) (User, error) {
+	row := q.db.QueryRow(ctx, getUserBySub, sub)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Sub,
+		&i.Provider,
+		&i.Email,
+		&i.Name,
+		&i.AvatarUrl,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const updateUser = `-- name: UpdateUser :one
+UPDATE users
+SET email = $2,
+    name = $3,
+    avatar_url = $4,
+    updated_at = NOW()
+WHERE sub = $1
+RETURNING id, sub, provider, email, name, avatar_url, created_at, updated_at
+`
+
+type UpdateUserParams struct {
+	Sub       string      `db:"sub" json:"sub"`
+	Email     string      `db:"email" json:"email"`
+	Name      pgtype.Text `db:"name" json:"name"`
+	AvatarUrl pgtype.Text `db:"avatar_url" json:"avatar_url"`
+}
+
+func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (User, error) {
+	row := q.db.QueryRow(ctx, updateUser,
+		arg.Sub,
+		arg.Email,
+		arg.Name,
+		arg.AvatarUrl,
+	)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Sub,
+		&i.Provider,
+		&i.Email,
+		&i.Name,
+		&i.AvatarUrl,
+		&i.CreatedAt,
+		&i.UpdatedAt,
 	)
 	return i, err
 }
