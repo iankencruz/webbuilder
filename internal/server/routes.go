@@ -6,13 +6,17 @@ import (
 	"github.com/labstack/echo/v4"
 
 	authmiddleware "github.com/iankencruz/webbuilder/internal/middleware"
+	"github.com/iankencruz/webbuilder/internal/repository"
 	"github.com/iankencruz/webbuilder/internal/session"
 )
 
 func (s *Server) registerRoutes() {
 	s.e.Use(session.LoadAndSave(s.sessionManager))
 	s.e.GET("/health", func(c echo.Context) error {
-		return c.JSON(http.StatusOK, map[string]string{"status": "ok"})
+		return c.JSON(http.StatusOK, map[string]any{
+			"status": "ok",
+			"User":   repository.User{PasswordHash: "hassssh"},
+		})
 	})
 
 	auth := s.e.Group("/auth")

@@ -1,0 +1,50 @@
+services:
+  postgres:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: pass
+      POSTGRES_DB: app
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql
+
+  # minio:
+  #   image: minio/minio:latest
+  #   command: server /data --console-address ":9001"
+  #   environment:
+  #     MINIO_ROOT_USER: minioadmin
+  #     MINIO_ROOT_PASSWORD: minioadmin
+  #     # IMPORTANT: This allows unsigned payloads which fixes signature errors
+  #     MINIO_API_CORS_ALLOW_ORIGIN: "*"
+  #   ports:
+  #     - "9000:9000" # S3 API
+  #     - "9001:9001" # MinIO Console
+  #   volumes:
+  #     - minio_data:/data
+  
+  # minio-setup:
+  #   image: minio/mc:latest
+  #   depends_on:
+  #     - minio
+  #   entrypoint: >
+  #     /bin/sh -c "
+  #     echo 'Waiting for MinIO...';
+  #     sleep 10;
+  #     /usr/bin/mc alias set myminio http://minio:9000 minioadmin minioadmin;
+  #     /usr/bin/mc mb myminio/threefive-media --ignore-existing;
+  #     /usr/bin/mc anonymous set download myminio/threefive-media;
+  #     echo 'MinIO ready!';
+  #     "
+  
+  # # local email testing
+  # mailpit:
+  #   image: axllent/mailpit:latest
+  #   ports:
+  #     - "1025:1025" # SMTP
+  #     - "8025:8025" # Web UI at http://localhost:8025
+
+volumes:
+  postgres_data:
+  # minio_data:

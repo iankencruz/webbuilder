@@ -1,26 +1,122 @@
 version: '3'
 
+
+dotenv: [".env", ".env.local"]
+
+vars:
+  BUILD_DIR: ./tmp
+  BINARY_NAME: app
+  GO_FILES: ./cmd/app/main.go
+
+
 tasks:
-  run:
+  default:
+    desc: "Show available tasks"
     cmds:
-      - go run ./cmd/app
+      - task --list
+
+  health:
+    desc: "Health check"
+    cmds:
+      - curl -f http://localhost:{{.PORT}}/health || echo "Backend not running"
+
+  clean:
+    desc: "Clean build artifacts"
+    cmds:
+      - task: go mod tidy
+
+  run:
+    desc: "Run Go Binary"
+    cmds:
+      - defer: { task: clean}
+      - air
 
   build:
+    desc: "Build Go binary"
     cmds:
-      - go build ./...
-
+      - go build -o {{.BUILD_DIR}}/main ./cmd/app/main.go
   test:
     cmds:
       - go test ./...
 
+  # GOOSE
+  db:create:
+    desc: "Create new migration (use: task db:create -- migration_name)"
+    cmds:
+      - goose -s -dir {{.GOOSE_MIGRATION_DIR}} create {{.CLI_ARGS}} sql
+    requires:
+      vars: [GOOSE_MIGRATION_DIR]
+
+  db:up:
+    desc: "Applies database migrations. Use `task db:up` to apply all pending migrations or `task db:up -- <version>` to migrate to a specific version."
+    cmds:
+      - |
+        {{if .CLI_ARGS}}
+        goose up-to {{.CLI_ARGS}}
+        {{else}}
+        goose up
+        {{end}}
+
+  db:down:
+    desc: "Rollback the last migration"
+    cmds:
+      - |
+        {{if .CLI_ARGS}}
+        goose down-to {{.CLI_ARGS}}
+        {{else}}
+        goose down
+        {{end}}
+
+  db:status:
+    desc: "Show migration status"
+    cmds:
+      - goose status
+
+  db:reset:
+    aliases: [db:res]
+    desc: "Reset database (rollback all migrations)"
+    prompt: "This will rollback all migrations. Are you sure?"
+    cmds:
+      - goose  reset
+      - goose  up
+
+  db:version:
+    aliases: [db-v]
+    desc: "Show current migration version"
+    cmds:
+      - goose version
+
+  db:fix:
+    desc: "Fix sequential numbering of migration files"
+    cmds:
+      - goose fix
+
+  # =====================================
+  # SQLC tasks
+  # =====================================
+
   sqlc:
+    desc: "Generate Go code from SQL"
+    dir: "{{.BACKEND_DIR}}"
+    silent: true
     cmds:
-      - sqlc generate -f sqlc.yml
+      - sqlc generate
+      - echo "sqlc generate completed."
 
-  migrate-up:
-    cmds:
-      - goose -dir db/migrations postgres "${DATABASE_URL}" up
 
-  migrate-create:
+  # =====================================
+  # Docker tasks
+  # =====================================
+  
+  docker-up:
+    desc: "Start Docker compose services"
     cmds:
-      - goose -dir db/migrations create {{.NAME}} sql
+      - docker compose up -d
+
+
+  docker-down:
+    desc: "Start Docker compose services"
+    cmds:
+      - docker compose down
+
+
