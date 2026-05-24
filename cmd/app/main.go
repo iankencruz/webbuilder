@@ -46,7 +46,7 @@ func main() {
 	queries := repository.New(pool)
 	authService := service.NewAuthService(queries)
 	authHandler := handler.NewAuthHandler(authService, sessionManager, oidcRegistry)
-	app := server.New(cfg, authHandler, sessionManager, oidcRegistry)
+	app := server.New(cfg, authHandler, sessionManager)
 
 	if err := app.Start(); err != nil {
 		log.Fatalf("start server: %v", err)

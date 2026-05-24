@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	"github.com/alexedwards/scs/v2"
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"golang.org/x/oauth2"
 
 	"github.com/iankencruz/webbuilder/internal/oidc"
@@ -27,7 +27,7 @@ func NewAuthHandler(authService *service.AuthService, sessions *scs.SessionManag
 	}
 }
 
-func (h *AuthHandler) OAuthLogin(c echo.Context) error {
+func (h *AuthHandler) OAuthLogin(c *echo.Context) error {
 	providerName := c.Param("provider")
 
 	provider, ok := h.oidcRegistry.Get(providerName)
@@ -57,7 +57,7 @@ func (h *AuthHandler) OAuthLogin(c echo.Context) error {
 	return c.Redirect(http.StatusTemporaryRedirect, url)
 }
 
-func (h *AuthHandler) OAuthCallback(c echo.Context) error {
+func (h *AuthHandler) OAuthCallback(c *echo.Context) error {
 	ctx := c.Request().Context()
 
 	// retrieve and pop state, nonce, provider from session
@@ -122,12 +122,12 @@ func (h *AuthHandler) OAuthCallback(c echo.Context) error {
 	return c.Redirect(http.StatusTemporaryRedirect, provider.PostLoginURL)
 }
 
-func (h *AuthHandler) Logout(c echo.Context) error {
+func (h *AuthHandler) Logout(c *echo.Context) error {
 	h.sessions.Remove(c.Request().Context(), "user_id")
 	return c.NoContent(http.StatusNoContent)
 }
 
-func (h *AuthHandler) Me(c echo.Context) error {
+func (h *AuthHandler) Me(c *echo.Context) error {
 	userID := h.sessions.GetInt64(c.Request().Context(), "user_id")
 	if userID == 0 {
 		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "unauthorized"})

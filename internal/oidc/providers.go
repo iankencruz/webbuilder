@@ -10,8 +10,9 @@ import (
 )
 
 var standardOIDC = map[string]bool{
-	"rauthy": true,
-	"google": true,
+	"rauthy":  true,
+	"google":  true,
+	"zitadel": true,
 }
 
 func NewRegistry(ctx context.Context, cfg *config.Config) (*Registry, error) {

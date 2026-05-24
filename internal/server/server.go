@@ -2,12 +2,13 @@ package server
 
 import (
 	"github.com/alexedwards/scs/v2"
-	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
+	"github.com/labstack/echo/v5"
+	"github.com/labstack/echo/v5/middleware"
 
 	"github.com/iankencruz/webbuilder/internal/config"
 	"github.com/iankencruz/webbuilder/internal/handler"
-	"github.com/iankencruz/webbuilder/internal/oidc"
+	"github.com/iankencruz/webbuilder/internal/session"
+	"github.com/iankencruz/webbuilder/pkg/logger"
 )
 
 type Server struct {
@@ -15,20 +16,19 @@ type Server struct {
 	cfg            *config.Config
 	authHandler    *handler.AuthHandler
 	sessionManager *scs.SessionManager
-	oidcRegistry   *oidc.Registry
 }
 
-func New(cfg *config.Config, authHandler *handler.AuthHandler, sessionManager *scs.SessionManager, oidcRegistry *oidc.Registry) *Server {
+func New(cfg *config.Config, authHandler *handler.AuthHandler, sessionManager *scs.SessionManager) *Server {
 	e := echo.New()
 	e.Use(middleware.Recover())
-	e.Use(middleware.Logger())
+	e.Use(middleware.RequestLoggerWithConfig(logger.RequestLoggerConfig()))
+	e.Use(session.LoadAndSave(sessionManager))
 
 	s := &Server{
 		e:              e,
 		cfg:            cfg,
 		authHandler:    authHandler,
 		sessionManager: sessionManager,
-		oidcRegistry:   oidcRegistry,
 	}
 	s.registerRoutes()
 

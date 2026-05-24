@@ -1,5 +1,4 @@
-version: '3'
-
+version: "3"
 
 dotenv: [".env", ".env.local"]
 
@@ -7,7 +6,6 @@ vars:
   BUILD_DIR: ./tmp
   BINARY_NAME: app
   GO_FILES: ./cmd/app/main.go
-
 
 tasks:
   default:
@@ -28,7 +26,7 @@ tasks:
   run:
     desc: "Run Go Binary"
     cmds:
-      - defer: { task: clean}
+      - defer: { task: clean }
       - air
 
   build:
@@ -37,7 +35,7 @@ tasks:
       - go build -o {{.BUILD_DIR}}/main ./cmd/app/main.go
   test:
     cmds:
-      - go test ./...
+      - go test ./... -v
 
   # GOOSE
   db:create:
@@ -103,20 +101,16 @@ tasks:
       - sqlc generate
       - echo "sqlc generate completed."
 
-
   # =====================================
   # Docker tasks
   # =====================================
-  
+
   docker-up:
     desc: "Start Docker compose services"
     cmds:
       - docker compose up -d
 
-
   docker-down:
     desc: "Start Docker compose services"
     cmds:
       - docker compose down
-
-

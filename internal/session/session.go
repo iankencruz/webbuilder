@@ -7,7 +7,7 @@ import (
 	"github.com/alexedwards/scs/pgxstore"
 	"github.com/alexedwards/scs/v2"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 )
 
 func NewManager(pool *pgxpool.Pool, lifetime time.Duration, secure bool, cookieName string) *scs.SessionManager {
@@ -25,11 +25,10 @@ func NewManager(pool *pgxpool.Pool, lifetime time.Duration, secure bool, cookieN
 
 func LoadAndSave(manager *scs.SessionManager) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
-		return func(c echo.Context) error {
+		return func(c *echo.Context) error {
 			var handlerErr error
 			handler := manager.LoadAndSave(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				c.SetRequest(r)
-				c.SetResponse(echo.NewResponse(w, c.Echo()))
 				handlerErr = next(c)
 			}))
 			handler.ServeHTTP(c.Response(), c.Request())
