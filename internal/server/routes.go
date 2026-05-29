@@ -13,10 +13,12 @@ func (s *Server) registerRoutes() {
 		return c.JSON(http.StatusOK, map[string]any{"status": "ok"})
 	})
 
-	auth := s.e.Group("/auth")
+	api := s.e.Group("/api")
+
+	auth := api.Group("/auth")
 	auth.POST("/logout", s.authHandler.Logout)
 	auth.GET("/:provider/login", s.authHandler.OAuthLogin)
 	auth.GET("/:provider/callback", s.authHandler.OAuthCallback)
 
-	s.e.GET("/me", s.authHandler.Me, authmiddleware.RequireAuth(s.sessionManager))
+	api.GET("/me", s.authHandler.Me, authmiddleware.RequireAuth(s.sessionManager))
 }
