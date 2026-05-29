@@ -12,5 +12,7 @@ sql:
         emit_db_tags: true
         emit_interface: false
         overrides:
-          - column: users.password_hash
+          - column: users.provider
+            go_struct_tag: 'json:"-"'
+          - column: users.sub
             go_struct_tag: 'json:"-"'

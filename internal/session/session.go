@@ -27,10 +27,20 @@ func LoadAndSave(manager *scs.SessionManager) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c *echo.Context) error {
 			var handlerErr error
+
 			handler := manager.LoadAndSave(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				// preserve path values before replacing context
+				pathValues := c.PathValues()
+
 				c.SetRequest(r)
+				*c = *c.Echo().NewContext(r, w)
+
+				// restore path values
+				c.SetPathValues(pathValues)
+
 				handlerErr = next(c)
 			}))
+
 			handler.ServeHTTP(c.Response(), c.Request())
 			return handlerErr
 		}

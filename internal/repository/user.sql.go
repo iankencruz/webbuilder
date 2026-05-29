@@ -12,16 +12,17 @@ import (
 )
 
 const createUser = `-- name: CreateUser :one
-INSERT INTO users (sub, provider, email, name, avatar_url)
-VALUES ($1, $2, $3, $4, $5)
-RETURNING id, sub, provider, email, name, avatar_url, created_at, updated_at
+INSERT INTO users (sub, provider, email, first_name, last_name, avatar_url)
+VALUES ($1, $2, $3, $4, $5, $6)
+RETURNING id, sub, provider, email, first_name, last_name, avatar_url, created_at, updated_at
 `
 
 type CreateUserParams struct {
-	Sub       string      `db:"sub" json:"sub"`
-	Provider  string      `db:"provider" json:"provider"`
+	Sub       string      `db:"sub" json:"-"`
+	Provider  string      `db:"provider" json:"-"`
 	Email     string      `db:"email" json:"email"`
-	Name      pgtype.Text `db:"name" json:"name"`
+	FirstName pgtype.Text `db:"first_name" json:"first_name"`
+	LastName  pgtype.Text `db:"last_name" json:"last_name"`
 	AvatarUrl pgtype.Text `db:"avatar_url" json:"avatar_url"`
 }
 
@@ -30,7 +31,8 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		arg.Sub,
 		arg.Provider,
 		arg.Email,
-		arg.Name,
+		arg.FirstName,
+		arg.LastName,
 		arg.AvatarUrl,
 	)
 	var i User
@@ -39,7 +41,8 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		&i.Sub,
 		&i.Provider,
 		&i.Email,
-		&i.Name,
+		&i.FirstName,
+		&i.LastName,
 		&i.AvatarUrl,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -48,7 +51,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 }
 
 const getUserByID = `-- name: GetUserByID :one
-SELECT id, sub, provider, email, name, avatar_url, created_at, updated_at FROM users
+SELECT id, sub, provider, email, first_name, last_name, avatar_url, created_at, updated_at FROM users
 WHERE id = $1 LIMIT 1
 `
 
@@ -60,7 +63,8 @@ func (q *Queries) GetUserByID(ctx context.Context, id int64) (User, error) {
 		&i.Sub,
 		&i.Provider,
 		&i.Email,
-		&i.Name,
+		&i.FirstName,
+		&i.LastName,
 		&i.AvatarUrl,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -69,7 +73,7 @@ func (q *Queries) GetUserByID(ctx context.Context, id int64) (User, error) {
 }
 
 const getUserBySub = `-- name: GetUserBySub :one
-SELECT id, sub, provider, email, name, avatar_url, created_at, updated_at FROM users
+SELECT id, sub, provider, email, first_name, last_name, avatar_url, created_at, updated_at FROM users
 WHERE sub = $1 LIMIT 1
 `
 
@@ -81,7 +85,8 @@ func (q *Queries) GetUserBySub(ctx context.Context, sub string) (User, error) {
 		&i.Sub,
 		&i.Provider,
 		&i.Email,
-		&i.Name,
+		&i.FirstName,
+		&i.LastName,
 		&i.AvatarUrl,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -92,17 +97,19 @@ func (q *Queries) GetUserBySub(ctx context.Context, sub string) (User, error) {
 const updateUser = `-- name: UpdateUser :one
 UPDATE users
 SET email = $2,
-    name = $3,
-    avatar_url = $4,
+    first_name = $3,
+    last_name = $4,
+    avatar_url = $5,
     updated_at = NOW()
 WHERE sub = $1
-RETURNING id, sub, provider, email, name, avatar_url, created_at, updated_at
+RETURNING id, sub, provider, email, first_name, last_name, avatar_url, created_at, updated_at
 `
 
 type UpdateUserParams struct {
-	Sub       string      `db:"sub" json:"sub"`
+	Sub       string      `db:"sub" json:"-"`
 	Email     string      `db:"email" json:"email"`
-	Name      pgtype.Text `db:"name" json:"name"`
+	FirstName pgtype.Text `db:"first_name" json:"first_name"`
+	LastName  pgtype.Text `db:"last_name" json:"last_name"`
 	AvatarUrl pgtype.Text `db:"avatar_url" json:"avatar_url"`
 }
 
@@ -110,7 +117,8 @@ func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (User, e
 	row := q.db.QueryRow(ctx, updateUser,
 		arg.Sub,
 		arg.Email,
-		arg.Name,
+		arg.FirstName,
+		arg.LastName,
 		arg.AvatarUrl,
 	)
 	var i User
@@ -119,7 +127,8 @@ func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (User, e
 		&i.Sub,
 		&i.Provider,
 		&i.Email,
-		&i.Name,
+		&i.FirstName,
+		&i.LastName,
 		&i.AvatarUrl,
 		&i.CreatedAt,
 		&i.UpdatedAt,

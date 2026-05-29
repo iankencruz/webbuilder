@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 
 	"github.com/iankencruz/webbuilder/internal/repository"
 	"github.com/jackc/pgx/v5"
@@ -27,26 +28,31 @@ func NewAuthService(repo AuthRepository) *AuthService {
 	return &AuthService{repo: repo}
 }
 
-func (s *AuthService) FindOrCreateUser(ctx context.Context, sub, provider, email, name, avatarURL string) (repository.User, error) {
+func (s *AuthService) FindOrCreateUser(ctx context.Context, sub, provider, email, firstName, lastName, avatarURL string) (repository.User, error) {
+	log.Printf("DEBUG FindOrCreateUser sub=%s provider=%s email=%s firstName=%s lastname=%s", sub, provider, email, firstName, lastName)
+
 	_, err := s.repo.GetUserBySub(ctx, sub)
 	if err == nil {
 		return s.repo.UpdateUser(ctx, repository.UpdateUserParams{
 			Sub:       sub,
 			Email:     email,
-			Name:      pgtype.Text{String: name, Valid: name != ""},
+			FirstName: pgtype.Text{String: firstName, Valid: firstName != ""},
+			LastName:  pgtype.Text{String: lastName, Valid: lastName != ""},
 			AvatarUrl: pgtype.Text{String: avatarURL, Valid: avatarURL != ""},
 		})
 	}
 
 	if !errors.Is(err, pgx.ErrNoRows) {
+		log.Printf("DEBUG unexpected db error: %v", err)
 		return repository.User{}, fmt.Errorf("looking up user by sub: %w", err)
 	}
-
+	log.Printf("DEBUG creating new user")
 	return s.repo.CreateUser(ctx, repository.CreateUserParams{
 		Sub:       sub,
 		Provider:  provider,
 		Email:     email,
-		Name:      pgtype.Text{String: name, Valid: name != ""},
+		FirstName: pgtype.Text{String: firstName, Valid: firstName != ""},
+		LastName:  pgtype.Text{String: lastName, Valid: lastName != ""},
 		AvatarUrl: pgtype.Text{String: avatarURL, Valid: avatarURL != ""},
 	})
 }

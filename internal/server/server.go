@@ -7,8 +7,6 @@ import (
 
 	"github.com/iankencruz/webbuilder/internal/config"
 	"github.com/iankencruz/webbuilder/internal/handler"
-	"github.com/iankencruz/webbuilder/internal/session"
-	"github.com/iankencruz/webbuilder/pkg/logger"
 )
 
 type Server struct {
@@ -20,9 +18,11 @@ type Server struct {
 
 func New(cfg *config.Config, authHandler *handler.AuthHandler, sessionManager *scs.SessionManager) *Server {
 	e := echo.New()
-	e.Use(middleware.Recover())
-	e.Use(middleware.RequestLoggerWithConfig(logger.RequestLoggerConfig()))
-	e.Use(session.LoadAndSave(sessionManager))
+
+	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
+		AllowOrigins:     []string{"http://localhost:5173"},
+		AllowCredentials: true,
+	}))
 
 	s := &Server{
 		e:              e,

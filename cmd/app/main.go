@@ -21,6 +21,8 @@ func main() {
 	ctx := context.Background()
 	cfg := config.Load()
 
+	// log.Printf("OIDC providers: %+v", cfg.OIDCProvider)
+
 	pool, err := db.NewPool(ctx, cfg.DatabaseURL)
 	if err != nil {
 		log.Fatalf("create db pool: %v", err)

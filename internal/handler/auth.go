@@ -3,6 +3,7 @@ package handler
 import (
 	"crypto/rand"
 	"encoding/base64"
+	"log"
 	"net/http"
 
 	"github.com/alexedwards/scs/v2"
@@ -95,11 +96,12 @@ func (h *AuthHandler) OAuthCallback(c *echo.Context) error {
 
 	// extract claims
 	var claims struct {
-		Sub     string `json:"sub"`
-		Email   string `json:"email"`
-		Name    string `json:"name"`
-		Picture string `json:"picture"`
-		Nonce   string `json:"nonce"`
+		Sub        string `json:"sub"`
+		Email      string `json:"email"`
+		GivenName  string `json:"given_name"`  // first name
+		FamilyName string `json:"family_name"` // last name
+		Picture    string `json:"picture"`
+		Nonce      string `json:"nonce"`
 	}
 	if err := idToken.Claims(&claims); err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "failed to parse claims"})
@@ -111,8 +113,9 @@ func (h *AuthHandler) OAuthCallback(c *echo.Context) error {
 	}
 
 	// find or create user
-	user, err := h.authService.FindOrCreateUser(ctx, claims.Sub, providerName, claims.Email, claims.Name, claims.Picture)
+	user, err := h.authService.FindOrCreateUser(ctx, claims.Sub, providerName, claims.Email, claims.GivenName, claims.FamilyName, claims.Picture)
 	if err != nil {
+		log.Printf("DEBUG FindOrCreateUser error: %v", err)
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "failed to find or create user"})
 	}
 
@@ -134,11 +137,12 @@ func (h *AuthHandler) Me(c *echo.Context) error {
 	}
 
 	user, err := h.authService.GetByID(c.Request().Context(), userID)
+	log.Printf("fname=%v lname=%v", user.FirstName, user.LastName)
 	if err != nil {
 		return c.JSON(http.StatusNotFound, map[string]string{"error": "user not found"})
 	}
 
-	return c.JSON(http.StatusOK, map[string]any{"id": user.ID, "email": user.Email})
+	return c.JSON(http.StatusOK, user)
 }
 
 func generateState() (string, error) {

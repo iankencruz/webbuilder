@@ -16,10 +16,11 @@ type Session struct {
 
 type User struct {
 	ID        int64              `db:"id" json:"id"`
-	Sub       string             `db:"sub" json:"sub"`
-	Provider  string             `db:"provider" json:"provider"`
+	Sub       string             `db:"sub" json:"-"`
+	Provider  string             `db:"provider" json:"-"`
 	Email     string             `db:"email" json:"email"`
-	Name      pgtype.Text        `db:"name" json:"name"`
+	FirstName pgtype.Text        `db:"first_name" json:"first_name"`
+	LastName  pgtype.Text        `db:"last_name" json:"last_name"`
 	AvatarUrl pgtype.Text        `db:"avatar_url" json:"avatar_url"`
 	CreatedAt pgtype.Timestamptz `db:"created_at" json:"created_at"`
 	UpdatedAt pgtype.Timestamptz `db:"updated_at" json:"updated_at"`
