@@ -18,13 +18,24 @@ request:
   auth:
     type: oauth2
     flow: authorization_code
+    callbackUrl: http://localhost:8080/api/auth/zitadel/callback
     credentials:
+      clientId: '"/api/auth/zitadel/login"'
+      clientSecret: |-
+        nh3iZlhjzWX2vz46XLyHRBwXwsL7XtCHmD0FnBhcPPznGsjuzsf8cTHYnfdpCVj6
+        nh3iZlhjzWX2vz46XLyHRBwXwsL7XtCHmD0FnBhcPPznGsjuzsf8cTHYnfdpCVj6
+        nh3iZlhjzWX2vz46XLyHRBwXwsL7XtCHmD0FnBhcPPznGsjuzsf8cTHYnfdpCVj6
       placement: body
+    pkce:
+      disabled: true
     tokenConfig:
       id: credentials
       placement:
         header: Bearer
       source: access_token
+    settings:
+      autoFetchToken: true
+      autoRefreshToken: false
 bundled: false
 extensions:
   bruno:

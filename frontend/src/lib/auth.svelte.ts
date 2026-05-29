@@ -1,31 +1,28 @@
-type User = {
-  id: number;
-  email: string;
-} | null;
+import type { User } from "$lib/types";
 
-const authState = $state({ user: null as User, loading: true });
+const state = $state({ user: null as User | null, loading: true });
 
 export const auth = {
   get user() {
-    return authState.user;
+    return state.user;
   },
   get loading() {
-    return authState.loading;
+    return state.loading;
   },
 
   async fetchMe() {
     try {
       const res = await fetch("/api/me", { credentials: "include" });
-      authState.user = res.ok ? await res.json() : null;
+      state.user = res.ok ? await res.json() : null;
     } catch {
-      authState.user = null;
+      state.user = null;
     } finally {
-      authState.loading = false;
+      state.loading = false;
     }
   },
 
   async logout() {
     await fetch("/api/auth/logout", { method: "POST", credentials: "include" });
-    authState.user = null;
+    state.user = null;
   },
 };
