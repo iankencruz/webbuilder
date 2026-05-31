@@ -1,9 +1,8 @@
 <script lang="ts">
-  import { auth } from '$lib/auth.svelte';
   import { stats, transactions } from '$lib/data/dashboard';
 </script>
 
-<div class="space-y-6 max-w-7xl mx-auto">
+<div class="space-y-6">
   <!-- Page title -->
   <div>
     <h1 class="text-xl font-semibold text-foreground">Dashboard</h1>

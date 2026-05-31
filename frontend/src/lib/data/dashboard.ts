@@ -1,27 +1,54 @@
-export const navGroups = [
+import LayoutDashboardIcon from '@lucide/svelte/icons/layout-dashboard';
+import BarChartIcon from '@lucide/svelte/icons/bar-chart';
+import FileTextIcon from '@lucide/svelte/icons/file-text';
+import FolderIcon from '@lucide/svelte/icons/folder';
+import CheckSquareIcon from '@lucide/svelte/icons/check-square';
+import CalendarIcon from '@lucide/svelte/icons/calendar';
+import MessageSquareIcon from '@lucide/svelte/icons/message-square';
+import UserIcon from '@lucide/svelte/icons/user';
+import CreditCardIcon from '@lucide/svelte/icons/credit-card';
+import SettingsIcon from '@lucide/svelte/icons/settings';
+import type { Component } from 'svelte';
+
+export interface NavItem {
+  title: string;
+  href: string;
+  icon: Component;
+}
+
+export interface NavGroup {
+  label: string;
+  items: NavItem[];
+}
+
+export const navGroups: NavGroup[] = [
   {
     label: 'General',
     items: [
-      { icon: '▦', label: 'Dashboard', href: '/admin/dashboard', active: true },
-      { icon: '◈', label: 'Analytics', href: '/admin/analytics' },
-      { icon: '◎', label: 'Reports', href: '/admin/reports' },
+      {
+        title: 'Dashboard',
+        href: '/admin/dashboard',
+        icon: LayoutDashboardIcon,
+      },
+      { title: 'Analytics', href: '/admin/analytics', icon: BarChartIcon },
+      { title: 'Reports', href: '/admin/reports', icon: FileTextIcon },
     ],
   },
   {
     label: 'Manage',
     items: [
-      { icon: '⊞', label: 'Projects', href: '/admin/projects' },
-      { icon: '◻', label: 'Tasks', href: '/admin/tasks' },
-      { icon: '◷', label: 'Calendar', href: '/admin/calendar' },
-      { icon: '⊜', label: 'Messages', href: '/admin/messages' },
+      { title: 'Projects', href: '/admin/projects', icon: FolderIcon },
+      { title: 'Tasks', href: '/admin/tasks', icon: CheckSquareIcon },
+      { title: 'Calendar', href: '/admin/calendar', icon: CalendarIcon },
+      { title: 'Messages', href: '/admin/messages', icon: MessageSquareIcon },
     ],
   },
   {
     label: 'Settings',
     items: [
-      { icon: '◉', label: 'Profile', href: '/admin/profile' },
-      { icon: '⊟', label: 'Billing', href: '/admin/billing' },
-      { icon: '◍', label: 'Settings', href: '/admin/settings' },
+      { title: 'Profile', href: '/admin/profile', icon: UserIcon },
+      { title: 'Billing', href: '/admin/billing', icon: CreditCardIcon },
+      { title: 'Settings', href: '/admin/settings', icon: SettingsIcon },
     ],
   },
 ];

@@ -1,21 +1,21 @@
 <script lang="ts">
-	import './layout.css';
-	import favicon from '$lib/assets/favicon.svg';
+  import './layout.css';
+  import favicon from '$lib/assets/favicon.svg';
   import { onMount } from 'svelte';
-  import { auth } from '$lib/auth.svelte';
+  import { Toaster } from '$lib/components/ui/sonner';
+  import { auth } from '$lib/hooks/auth.svelte';
 
-	let { children } = $props();
+  let { children } = $props();
 
-
-  onMount(() => auth.fetchMe())
+  onMount(() => auth.fetchMe());
 </script>
 
 <svelte:head><link rel="icon" href={favicon} /></svelte:head>
-
+<Toaster />
 {#if auth.loading}
   <div>
-  <span>Loading...</span>
+    <span>Loading...</span>
   </div>
 {:else}
-{@render children()}
+  {@render children()}
 {/if}

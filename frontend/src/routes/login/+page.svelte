@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { auth } from '$lib/auth.svelte';
   import { goto } from '$app/navigation';
   import { API_BASE } from '$lib/config';
+  import { auth } from '$lib/hooks/auth.svelte';
 
   if (auth.user) {
     console.log('Authenticated: redirecting to /dashboard');
