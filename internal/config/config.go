@@ -20,6 +20,7 @@ type OIDCProvider struct {
 type Config struct {
 	Addr            string
 	DatabaseURL     string
+	MigrationsDir   string
 	SessionLifetime time.Duration
 	SessionSecure   bool
 	SessionCookie   string
@@ -30,6 +31,7 @@ func Load() *Config {
 	return &Config{
 		Addr:            getEnv("APP_ADDR", ":8080"),
 		DatabaseURL:     getEnv("DATABASE_URL", "postgres://user:pass@localhost:5432/app?sslmode=disable"),
+		MigrationsDir:   getEnv("MIGRATIONS_DIR", "db/migrations"),
 		SessionLifetime: getEnvDuration("SESSION_LIFETIME_HOURS", 24) * time.Hour,
 		SessionSecure:   getEnvBool("SESSION_COOKIE_SECURE", true),
 		SessionCookie:   getEnv("SESSION_COOKIE_NAME", "webbuilder_session"),
