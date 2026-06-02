@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/iankencruz/webbuilder/internal/repository"
+	"github.com/iankencruz/webbuilder/internal/database/repository"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 )
@@ -43,7 +43,7 @@ func (s *AuthService) FindOrCreateUser(ctx context.Context, sub, provider, email
 	}
 
 	if !errors.Is(err, pgx.ErrNoRows) {
-		log.Printf("DEBUG unexpected db error: %v", err)
+		log.Printf("DEBUG unexpected repository error: %v", err)
 		return repository.User{}, fmt.Errorf("looking up user by sub: %w", err)
 	}
 	log.Printf("DEBUG creating new user")

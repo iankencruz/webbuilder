@@ -8,10 +8,10 @@ import (
 	_ "github.com/jackc/pgx/v5/stdlib"
 
 	"github.com/iankencruz/webbuilder/internal/config"
-	"github.com/iankencruz/webbuilder/internal/db"
+	"github.com/iankencruz/webbuilder/internal/database"
+	"github.com/iankencruz/webbuilder/internal/database/repository"
 	"github.com/iankencruz/webbuilder/internal/handler"
 	"github.com/iankencruz/webbuilder/internal/oidc"
-	"github.com/iankencruz/webbuilder/internal/repository"
 	"github.com/iankencruz/webbuilder/internal/server"
 	"github.com/iankencruz/webbuilder/internal/service"
 	"github.com/iankencruz/webbuilder/internal/session"
@@ -23,7 +23,7 @@ func main() {
 
 	// log.Printf("OIDC providers: %+v", cfg.OIDCProvider)
 
-	pool, err := db.NewPool(ctx, cfg.DatabaseURL)
+	pool, err := database.NewPool(ctx, cfg.DatabaseURL)
 	if err != nil {
 		log.Fatalf("create db pool: %v", err)
 	}
@@ -35,7 +35,7 @@ func main() {
 	}
 	defer sqlDB.Close()
 
-	if err := db.RunMigrations(sqlDB, "db/migrations"); err != nil {
+	if err := database.RunMigrations(sqlDB, "db/migrations"); err != nil {
 		log.Fatalf("run migrations: %v", err)
 	}
 
