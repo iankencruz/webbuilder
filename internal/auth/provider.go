@@ -17,6 +17,7 @@ type AuthProvider interface {
 	AuthenticationURL(state string) string
 	ExchangeCode(ctx context.Context, code string) (*UserProfile, error)
 	RedirectURI() string
+	PostLoginURL() string
 }
 
 type Registry struct {

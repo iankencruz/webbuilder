@@ -16,32 +16,42 @@ type OAuth2Provider struct {
 }
 
 func NewOAuth2Provider(name, clientID, clientSecret, redirectURI, issuerURI, postLoginURI string, scopes []string) *OAuth2Provider {
+	// default to OIDC discovery-style endpoints
+	authURL := issuerURI + "/oauth/v2/authorize"
+	tokenURL := issuerURI + "/oauth/v2/token"
+	userInfoURL := issuerURI + "/oidc/v1/userinfo"
+
+	// provider-specific endpoint overrides
+	switch name {
+	case "google":
+		authURL = "https://accounts.google.com/o/oauth2/v2/auth"
+		tokenURL = "https://oauth2.googleapis.com/token"
+		userInfoURL = "https://www.googleapis.com/oauth2/v3/userinfo"
+	case "github":
+		authURL = "https://github.com/login/oauth/authorize"
+		tokenURL = "https://github.com/login/oauth/access_token"
+		userInfoURL = "https://api.github.com/user"
+	case "discord":
+		authURL = "https://discord.com/api/oauth2/authorize"
+		tokenURL = "https://discord.com/api/oauth2/token"
+		userInfoURL = "https://discord.com/api/users/@me"
+	}
+
 	cfg := &oauth2.Config{
 		ClientID:     clientID,
 		ClientSecret: clientSecret,
 		RedirectURL:  redirectURI,
 		Scopes:       scopes,
 		Endpoint: oauth2.Endpoint{
-			AuthURL:  issuerURI + "/protocol/openid-connect/auth",
-			TokenURL: issuerURI + "/protocol/openid-connect/token",
+			AuthURL:   authURL,
+			TokenURL:  tokenURL,
+			AuthStyle: oauth2.AuthStyleInHeader,
 		},
-	}
-
-	userInfo := issuerURI + "/protocol/openid-connect/userinfo"
-
-	// Fallback override for providers that don't follow the OIDC spec
-	switch name {
-	case "google":
-		userInfo = "https://www.googleapis.com/oauth2/v3/userinfo"
-	case "github":
-		userInfo = "https://api.github.com/user"
-	case "discord":
-		userInfo = "https://discord.com/api/users/@me"
 	}
 
 	return &OAuth2Provider{
 		oauth2Config: cfg,
-		userInfoURL:  userInfo,
+		userInfoURL:  userInfoURL,
 		postLoginURL: postLoginURI,
 	}
 }
@@ -52,6 +62,10 @@ func (o *OAuth2Provider) AuthenticationURL(state string) string {
 
 func (o *OAuth2Provider) RedirectURI() string {
 	return o.oauth2Config.RedirectURL
+}
+
+func (o *OAuth2Provider) PostLoginURL() string {
+	return o.postLoginURL
 }
 
 func (o *OAuth2Provider) ExchangeCode(ctx context.Context, code string) (*UserProfile, error) {

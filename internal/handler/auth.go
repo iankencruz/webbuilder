@@ -5,7 +5,6 @@ import (
 	"encoding/base64"
 	"log"
 	"net/http"
-	"strings"
 
 	"github.com/alexedwards/scs/v2"
 	"github.com/labstack/echo/v5"
@@ -118,9 +117,9 @@ func (h *AuthHandler) OAuthCallback(c *echo.Context) error {
 
 	// create session
 	h.sessions.Put(ctx, "user_id", user.ID)
-	targetURL := provider.RedirectURI()
-	log.Printf("[CALLBACK SUCCESS] Redirecting browser to absolute target: '%s'", targetURL)
-	return c.Redirect(http.StatusTemporaryRedirect, provider.RedirectURI())
+	postLoginURL := provider.PostLoginURL()
+	log.Printf("[CALLBACK SUCCESS] Redirecting browser to absolute target: '%s'", postLoginURL)
+	return c.Redirect(http.StatusTemporaryRedirect, postLoginURL)
 }
 
 func (h *AuthHandler) Logout(c *echo.Context) error {
@@ -150,15 +149,4 @@ func generateState() (string, error) {
 		return "", err
 	}
 	return base64.URLEncoding.EncodeToString(b), nil
-}
-
-func splitName(fullName string) (string, string) {
-	parts := strings.SplitN(strings.TrimSpace(fullName), " ", 2)
-	if len(parts) == 2 {
-		return parts[0], parts[1]
-	}
-	if len(parts) == 1 {
-		return parts[0], ""
-	}
-	return "", ""
 }

@@ -53,10 +53,10 @@ func Load() *Config {
 			PostLoginURI: getEnv("GOOGLE_POST_LOGIN_URI", "http://localhost:5173/admin/dashboard"),
 		},
 		Zitadel: ZitadelConfig{
-			ClientID:     getEnvRequired("ZITADEL_CLIENT_ID"),
-			ClientSecret: getEnvRequired("ZITADEL_CLIENT_SECRET"),
+			ClientID:     getEnv("ZITADEL_CLIENT_ID", ""),
+			ClientSecret: getEnv("ZITADEL_CLIENT_SECRET", ""),
 			RedirectURI:  getEnv("ZITADEL_REDIRECT_URI", "http://localhost:8080/api/auth/callback/zitadel"),
-			IssuerURI:    getEnvRequired("ZITADEL_ISSUER_URI"),
+			IssuerURI:    getEnv("ZITADEL_ISSUER_URI", ""),
 			PostLoginURI: getEnv("ZITADEL_POST_LOGIN_URI", "http://localhost:5173/admin/dashboard"),
 		},
 	}
@@ -67,6 +67,7 @@ func getEnv(key, fallback string) string {
 	if value == "" {
 		return fallback
 	}
+
 	return value
 }
 
