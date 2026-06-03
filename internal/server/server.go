@@ -2,7 +2,8 @@ package server
 
 import (
 	"context"
-	"log"
+	"log/slog"
+	"os"
 
 	"github.com/alexedwards/scs/v2"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -27,6 +28,8 @@ type Server struct {
 func New(ctx context.Context, cfg *config.Config, pool *pgxpool.Pool) *Server {
 	e := echo.New()
 
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+
 	sessionManager := session.NewManager(pool, cfg.SessionLifetime, cfg.SessionSecure, cfg.SessionCookie)
 
 	queries := repository.New(pool)
@@ -42,9 +45,10 @@ func New(ctx context.Context, cfg *config.Config, pool *pgxpool.Pool) *Server {
 	// Force the Session State engine to wrap around every execution request context cleanly
 	e.Use(echo.WrapMiddleware(sessionManager.LoadAndSave))
 
-	authRegistry := initAuthRegistry(cfg)
+	authRegistry := initAuthRegistry(cfg, logger)
 
 	authHandler := handler.NewAuthHandler(
+		logger,
 		service.NewAuthService(queries),
 		sessionManager,
 		authRegistry,
@@ -65,7 +69,7 @@ func (s *Server) Start() error {
 	return s.e.Start(s.cfg.Addr)
 }
 
-func initAuthRegistry(cfg *config.Config) *auth.Registry {
+func initAuthRegistry(cfg *config.Config, log *slog.Logger) *auth.Registry {
 	registry := auth.NewRegistry()
 
 	// Register Zitadel provider first (priority)
@@ -80,7 +84,7 @@ func initAuthRegistry(cfg *config.Config) *auth.Registry {
 			[]string{"openid", "profile", "email"},
 		)
 		registry.Register("zitadel", zitadelProvider)
-		log.Printf("Registered Zitadel provider with redirect URI: %s", zitadelProvider.RedirectURI())
+		log.Info("registered auth provider", "provider", "zitadel", "redirect_uri", zitadelProvider.RedirectURI())
 	}
 
 	if cfg.Google.ClientID != "" && cfg.Google.ClientSecret != "" {
@@ -94,7 +98,7 @@ func initAuthRegistry(cfg *config.Config) *auth.Registry {
 			[]string{"openid", "profile", "email"},
 		)
 		registry.Register("google", googleProvider)
-		log.Printf("Registered Google provider with redirect URI: %s", googleProvider.RedirectURI())
+		log.Info("registered auth provider", "provider", "google", "redirect_uri", googleProvider.RedirectURI())
 	}
 
 	return registry

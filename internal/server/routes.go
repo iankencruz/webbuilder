@@ -4,14 +4,12 @@ import (
 	"net/http"
 
 	"github.com/labstack/echo/v5"
-	"github.com/labstack/echo/v5/middleware"
 
 	authmiddleware "github.com/iankencruz/webbuilder/internal/middleware"
-	"github.com/iankencruz/webbuilder/pkg/logger"
 )
 
 func (s *Server) registerRoutes() {
-	s.e.Use(middleware.RequestLoggerWithConfig(logger.RequestLoggerConfig()))
+	s.e.Use(authmiddleware.CustomRequestLogger())
 
 	s.e.GET("/health", func(c *echo.Context) error {
 		return c.JSON(http.StatusOK, map[string]any{"status": "ok"})

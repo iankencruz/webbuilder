@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"log"
+	"log/slog"
 	"net/http"
 
 	"github.com/alexedwards/scs/v2"
@@ -14,13 +15,15 @@ import (
 )
 
 type AuthHandler struct {
+	log          *slog.Logger
 	authService  *service.AuthService
 	sessions     *scs.SessionManager
 	authRegistry *auth.Registry
 }
 
-func NewAuthHandler(authService *service.AuthService, sessions *scs.SessionManager, oidcRegistry *auth.Registry) *AuthHandler {
+func NewAuthHandler(log *slog.Logger, authService *service.AuthService, sessions *scs.SessionManager, oidcRegistry *auth.Registry) *AuthHandler {
 	return &AuthHandler{
+		log:          log,
 		authService:  authService,
 		sessions:     sessions,
 		authRegistry: oidcRegistry,
@@ -33,11 +36,11 @@ func (h *AuthHandler) OAuthLogin(c *echo.Context) error {
 		providerName = c.Param("provider")
 	}
 
-	log.Printf("[AUTH] Init login request for provider: '%s'", providerName)
+	h.log.Info("auth login request", "provider", providerName)
 
 	provider, ok := h.authRegistry.Get(providerName)
 	if !ok {
-		log.Printf("[AUTH ERROR] Provider lookup failed inside registry for key: '%s'", providerName)
+		h.log.Error("provider not found", "provider", providerName)
 		return c.JSON(http.StatusNotFound, map[string]string{"error": "unknown provider"})
 	}
 
@@ -55,11 +58,11 @@ func (h *AuthHandler) OAuthLogin(c *echo.Context) error {
 	h.sessions.Put(c.Request().Context(), "oauth_nonce", nonce)
 	h.sessions.Put(c.Request().Context(), "oauth_provider", providerName)
 
-	log.Printf("[AUTH] Session data initialized. State code generated: '%s'", state)
+	h.log.Info("session initialized", "state", state)
 
 	url := provider.AuthenticationURL(state)
 
-	log.Printf("[AUTH] Redirecting client window out to target IDP URL: %s", url)
+	h.log.Info("redirecting to IDP", "url", url)
 
 	return c.Redirect(http.StatusTemporaryRedirect, url)
 }
@@ -67,7 +70,7 @@ func (h *AuthHandler) OAuthLogin(c *echo.Context) error {
 func (h *AuthHandler) OAuthCallback(c *echo.Context) error {
 	ctx := c.Request().Context()
 
-	log.Printf("[CALLBACK] Endpoint reached! Request URI path: %s", c.Request().RequestURI)
+	h.log.Info("callback received", "uri", c.Request().RequestURI)
 
 	// retrieve and pop state, nonce, provider from session
 	storedState := h.sessions.PopString(ctx, "oauth_state")
@@ -75,29 +78,29 @@ func (h *AuthHandler) OAuthCallback(c *echo.Context) error {
 	incomingState := c.QueryParam("state")
 	incomingCode := c.QueryParam("code")
 
-	log.Printf("[CALLBACK] Session inspection -> Stored State: '%s', Tracked Provider: '%s'", storedState, providerName)
-	log.Printf("[CALLBACK] Query parameters -> Incoming State: '%s', Code length: %d", incomingState, len(incomingCode))
+	h.log.Info("callback session", "stored_state", storedState, "provider", providerName)
+	h.log.Info("callback params", "incoming_state", incomingState, "code_len", len(incomingCode))
 
 	if providerName == "" {
 		providerName = c.Param("provider")
-		log.Printf("[CALLBACK WARNING] Session provider tracking was blank, falling back to path segment matching: '%s'", providerName)
+		h.log.Debug("provider fallback", "provider", providerName)
 	}
 
 	if incomingState != storedState || storedState == "" {
-		log.Printf("[CALLBACK FATAL] Security state validation failed! Incoming: '%s', Stored: '%s'", incomingState, storedState)
+		h.log.Error("state mismatch", "incoming", incomingState, "stored", storedState)
 		return c.JSON(http.StatusNotFound, map[string]string{"error": "invalid anti-forgery token state tracking"})
 	}
 
 	provider, ok := h.authRegistry.Get(providerName)
 	if !ok {
-		log.Printf("[CALLBACK FATAL] Failed registry validation for provider: '%s'", providerName)
+		h.log.Error("provider not found", "provider", providerName)
 		return c.JSON(http.StatusNotFound, map[string]string{"error": "unknown provider"})
 	}
 
 	// exchange code for tokens
 	profile, err := provider.ExchangeCode(ctx, c.QueryParam("code"))
 	if err != nil {
-		log.Printf("[CALLBACK FATAL] Core identity token handshake exchange protocol failed: %v", err)
+		h.log.Error("token exchange failed", "err", err)
 		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "failed to exchange token"})
 	}
 
@@ -111,14 +114,14 @@ func (h *AuthHandler) OAuthCallback(c *echo.Context) error {
 		"",
 	)
 	if err != nil {
-		log.Printf("[CALLBACK ERROR] FindOrCreateUser database error: %v", err)
+		h.log.Error("find or create user failed", "err", err)
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "failed to find or create user"})
 	}
 
 	// create session
 	h.sessions.Put(ctx, "user_id", user.ID)
 	postLoginURL := provider.PostLoginURL()
-	log.Printf("[CALLBACK SUCCESS] Redirecting browser to absolute target: '%s'", postLoginURL)
+	h.log.Info("callback success", "redirect", postLoginURL)
 	return c.Redirect(http.StatusTemporaryRedirect, postLoginURL)
 }
 
