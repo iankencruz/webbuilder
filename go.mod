@@ -5,7 +5,6 @@ go 1.25.0
 require (
 	github.com/alexedwards/scs/pgxstore v0.0.0-20251002162104-209de6e426de
 	github.com/alexedwards/scs/v2 v2.8.0
-	github.com/coreos/go-oidc/v3 v3.18.0
 	github.com/jackc/pgx/v5 v5.7.6
 	github.com/labstack/echo/v5 v5.1.1
 	github.com/pressly/goose/v3 v3.26.0
@@ -14,7 +13,6 @@ require (
 )
 
 require (
-	github.com/go-jose/go-jose/v4 v4.1.4 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect
 	github.com/jackc/puddle/v2 v2.2.2 // indirect

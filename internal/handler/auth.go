@@ -5,34 +5,40 @@ import (
 	"encoding/base64"
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/alexedwards/scs/v2"
 	"github.com/labstack/echo/v5"
-	"golang.org/x/oauth2"
 
-	"github.com/iankencruz/webbuilder/internal/oidc"
+	"github.com/iankencruz/webbuilder/internal/auth"
 	"github.com/iankencruz/webbuilder/internal/service"
 )
 
 type AuthHandler struct {
 	authService  *service.AuthService
 	sessions     *scs.SessionManager
-	oidcRegistry *oidc.Registry
+	authRegistry *auth.Registry
 }
 
-func NewAuthHandler(authService *service.AuthService, sessions *scs.SessionManager, oidcRegistry *oidc.Registry) *AuthHandler {
+func NewAuthHandler(authService *service.AuthService, sessions *scs.SessionManager, oidcRegistry *auth.Registry) *AuthHandler {
 	return &AuthHandler{
 		authService:  authService,
 		sessions:     sessions,
-		oidcRegistry: oidcRegistry,
+		authRegistry: oidcRegistry,
 	}
 }
 
 func (h *AuthHandler) OAuthLogin(c *echo.Context) error {
 	providerName := c.Param("provider")
+	if providerName == "" {
+		providerName = c.Param("provider")
+	}
 
-	provider, ok := h.oidcRegistry.Get(providerName)
+	log.Printf("[AUTH] Init login request for provider: '%s'", providerName)
+
+	provider, ok := h.authRegistry.Get(providerName)
 	if !ok {
+		log.Printf("[AUTH ERROR] Provider lookup failed inside registry for key: '%s'", providerName)
 		return c.JSON(http.StatusNotFound, map[string]string{"error": "unknown provider"})
 	}
 
@@ -50,10 +56,11 @@ func (h *AuthHandler) OAuthLogin(c *echo.Context) error {
 	h.sessions.Put(c.Request().Context(), "oauth_nonce", nonce)
 	h.sessions.Put(c.Request().Context(), "oauth_provider", providerName)
 
-	url := provider.Config.AuthCodeURL(
-		state,
-		oauth2.SetAuthURLParam("nonce", nonce),
-	)
+	log.Printf("[AUTH] Session data initialized. State code generated: '%s'", state)
+
+	url := provider.AuthenticationURL(state)
+
+	log.Printf("[AUTH] Redirecting client window out to target IDP URL: %s", url)
 
 	return c.Redirect(http.StatusTemporaryRedirect, url)
 }
@@ -61,68 +68,59 @@ func (h *AuthHandler) OAuthLogin(c *echo.Context) error {
 func (h *AuthHandler) OAuthCallback(c *echo.Context) error {
 	ctx := c.Request().Context()
 
+	log.Printf("[CALLBACK] Endpoint reached! Request URI path: %s", c.Request().RequestURI)
+
 	// retrieve and pop state, nonce, provider from session
 	storedState := h.sessions.PopString(ctx, "oauth_state")
-	storedNonce := h.sessions.PopString(ctx, "oauth_nonce")
 	providerName := h.sessions.PopString(ctx, "oauth_provider")
+	incomingState := c.QueryParam("state")
+	incomingCode := c.QueryParam("code")
 
-	// validate state
-	if c.QueryParam("state") != storedState || storedState == "" {
-		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "invalid state"})
+	log.Printf("[CALLBACK] Session inspection -> Stored State: '%s', Tracked Provider: '%s'", storedState, providerName)
+	log.Printf("[CALLBACK] Query parameters -> Incoming State: '%s', Code length: %d", incomingState, len(incomingCode))
+
+	if providerName == "" {
+		providerName = c.Param("provider")
+		log.Printf("[CALLBACK WARNING] Session provider tracking was blank, falling back to path segment matching: '%s'", providerName)
 	}
 
-	provider, ok := h.oidcRegistry.Get(providerName)
+	if incomingState != storedState || storedState == "" {
+		log.Printf("[CALLBACK FATAL] Security state validation failed! Incoming: '%s', Stored: '%s'", incomingState, storedState)
+		return c.JSON(http.StatusNotFound, map[string]string{"error": "invalid anti-forgery token state tracking"})
+	}
+
+	provider, ok := h.authRegistry.Get(providerName)
 	if !ok {
+		log.Printf("[CALLBACK FATAL] Failed registry validation for provider: '%s'", providerName)
 		return c.JSON(http.StatusNotFound, map[string]string{"error": "unknown provider"})
 	}
 
 	// exchange code for tokens
-	token, err := provider.Config.Exchange(ctx, c.QueryParam("code"))
+	profile, err := provider.ExchangeCode(ctx, c.QueryParam("code"))
 	if err != nil {
+		log.Printf("[CALLBACK FATAL] Core identity token handshake exchange protocol failed: %v", err)
 		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "failed to exchange token"})
 	}
 
-	// extract raw id_token
-	rawIDToken, ok := token.Extra("id_token").(string)
-	if !ok {
-		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "missing id_token"})
-	}
-
-	// verify id token
-	idToken, err := provider.Verifier.Verify(ctx, rawIDToken)
+	user, err := h.authService.FindOrCreateUser(
+		ctx,
+		profile.Subject,
+		profile.Email,
+		profile.GivenName,
+		profile.FamilyName,
+		profile.Avatar,
+		"",
+	)
 	if err != nil {
-		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "invalid id_token"})
-	}
-
-	// extract claims
-	var claims struct {
-		Sub        string `json:"sub"`
-		Email      string `json:"email"`
-		GivenName  string `json:"given_name"`  // first name
-		FamilyName string `json:"family_name"` // last name
-		Picture    string `json:"picture"`
-		Nonce      string `json:"nonce"`
-	}
-	if err := idToken.Claims(&claims); err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "failed to parse claims"})
-	}
-
-	// validate nonce
-	if claims.Nonce != storedNonce || storedNonce == "" {
-		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "invalid nonce"})
-	}
-
-	// find or create user
-	user, err := h.authService.FindOrCreateUser(ctx, claims.Sub, providerName, claims.Email, claims.GivenName, claims.FamilyName, claims.Picture)
-	if err != nil {
-		log.Printf("DEBUG FindOrCreateUser error: %v", err)
+		log.Printf("[CALLBACK ERROR] FindOrCreateUser database error: %v", err)
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "failed to find or create user"})
 	}
 
 	// create session
 	h.sessions.Put(ctx, "user_id", user.ID)
-
-	return c.Redirect(http.StatusTemporaryRedirect, provider.PostLoginURL)
+	targetURL := provider.RedirectURI()
+	log.Printf("[CALLBACK SUCCESS] Redirecting browser to absolute target: '%s'", targetURL)
+	return c.Redirect(http.StatusTemporaryRedirect, provider.RedirectURI())
 }
 
 func (h *AuthHandler) Logout(c *echo.Context) error {
@@ -145,10 +143,22 @@ func (h *AuthHandler) Me(c *echo.Context) error {
 	return c.JSON(http.StatusOK, user)
 }
 
+// Internal Helper Utility Methods
 func generateState() (string, error) {
 	b := make([]byte, 16)
 	if _, err := rand.Read(b); err != nil {
 		return "", err
 	}
 	return base64.URLEncoding.EncodeToString(b), nil
+}
+
+func splitName(fullName string) (string, string) {
+	parts := strings.SplitN(strings.TrimSpace(fullName), " ", 2)
+	if len(parts) == 2 {
+		return parts[0], parts[1]
+	}
+	if len(parts) == 1 {
+		return parts[0], ""
+	}
+	return "", ""
 }

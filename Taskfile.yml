@@ -21,12 +21,17 @@ tasks:
   clean:
     desc: "Clean build artifacts"
     cmds:
-      - task: go mod tidy
+      - go mod tidy
+
+  
 
   run:
     desc: "Run Go Binary"
+    deps:
+      - ensure-docker
     cmds:
       - defer: { task: clean }
+      - defer: { task: docker-down }
       - air
 
   build:
@@ -105,12 +110,21 @@ tasks:
   # Docker tasks
   # =====================================
 
-  docker-up:
+  dockerup:
     desc: "Start Docker compose services"
     cmds:
       - docker compose up -d
 
-  docker-down:
+  dockerdown:
     desc: "Start Docker compose services"
     cmds:
       - docker compose down
+
+  ensure-docker:
+    aliases: [docker-check]
+    desc: "Start Docker Compose ONLY if zero containers are currently running"
+    # This evaluates to true (exit code 0) only if 'docker ps -q' returns an empty string
+    if: '[ -z "$(docker ps -q)" ]'
+    cmds:
+      - echo "No containers running! Booting environment..."
+      - docker compose up -d

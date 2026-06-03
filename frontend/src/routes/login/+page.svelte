@@ -19,7 +19,8 @@
     </div>
 
     <a
-      href="{API_BASE}/api/auth/zitadel/login"
+      href="{API_BASE}/api/auth/login/zitadel"
+      rel="external"
       class="flex items-center justify-center gap-3 w-full px-4 py-2.5 rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
     >
       <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none">

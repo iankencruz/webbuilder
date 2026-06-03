@@ -1,20 +1,27 @@
 package config
 
 import (
+	"log"
 	"os"
 	"strconv"
-	"strings"
 	"time"
 )
 
-type OIDCProvider struct {
-	Name         string
-	IssuerURL    string
+// *** Providers
+// *********************
+type GoogleConfig struct {
 	ClientID     string
 	ClientSecret string
-	RedirectURL  string
-	Scopes       []string
-	PostLoginURL string // configurable per provider
+	RedirectURI  string
+	PostLoginURI string
+}
+
+type ZitadelConfig struct {
+	ClientID     string
+	ClientSecret string
+	RedirectURI  string
+	IssuerURI    string
+	PostLoginURI string
 }
 
 type Config struct {
@@ -24,7 +31,10 @@ type Config struct {
 	SessionLifetime time.Duration
 	SessionSecure   bool
 	SessionCookie   string
-	OIDCProvider    map[string]OIDCProvider
+
+	// OIDC Providers
+	Google  GoogleConfig
+	Zitadel ZitadelConfig
 }
 
 func Load() *Config {
@@ -35,32 +45,21 @@ func Load() *Config {
 		SessionLifetime: getEnvDuration("SESSION_LIFETIME_HOURS", 24) * time.Hour,
 		SessionSecure:   getEnvBool("SESSION_COOKIE_SECURE", true),
 		SessionCookie:   getEnv("SESSION_COOKIE_NAME", "webbuilder_session"),
-		OIDCProvider:    loadOIDCProviders(),
+
+		Google: GoogleConfig{
+			ClientID:     getEnv("GOOGLE_CLIENT_ID", ""),
+			ClientSecret: getEnv("GOOGLE_CLIENT_SECRET", ""),
+			RedirectURI:  getEnv("GOOGLE_REDIRECT_URI", "http://localhost:8080/auth/google/callback"),
+			PostLoginURI: getEnv("GOOGLE_POST_LOGIN_URI", "http://localhost:5173/admin/dashboard"),
+		},
+		Zitadel: ZitadelConfig{
+			ClientID:     getEnvRequired("ZITADEL_CLIENT_ID"),
+			ClientSecret: getEnvRequired("ZITADEL_CLIENT_SECRET"),
+			RedirectURI:  getEnv("ZITADEL_REDIRECT_URI", "http://localhost:8080/api/auth/callback/zitadel"),
+			IssuerURI:    getEnvRequired("ZITADEL_ISSUER_URI"),
+			PostLoginURI: getEnv("ZITADEL_POST_LOGIN_URI", "http://localhost:5173/admin/dashboard"),
+		},
 	}
-}
-
-func loadOIDCProviders() map[string]OIDCProvider {
-	providers := make(map[string]OIDCProvider)
-
-	// reads OIDC_<NAME>_* env vars, supports multiple providers
-	for name := range strings.SplitSeq(getEnv("OIDC_PROVIDERS", ""), ",") {
-		name = strings.TrimSpace(strings.ToLower(name))
-		if name == "" {
-			continue
-		}
-		prefix := "OIDC_" + strings.ToUpper(name) + "_"
-		providers[name] = OIDCProvider{
-			Name:         name,
-			IssuerURL:    getEnv(prefix+"ISSUER_URL", ""),
-			ClientID:     getEnv(prefix+"CLIENT_ID", ""),
-			ClientSecret: getEnv(prefix+"CLIENT_SECRET", ""),
-
-			RedirectURL:  getEnv(prefix+"REDIRECT_URL", ""),
-			Scopes:       strings.Split(getEnv(prefix+"SCOPES", "openid,email,profile"), ","),
-			PostLoginURL: getEnv(prefix+"POST_LOGIN_URL", "/"),
-		}
-	}
-	return providers
 }
 
 func getEnv(key, fallback string) string {
@@ -95,4 +94,13 @@ func getEnvBool(key string, fallback bool) bool {
 		return fallback
 	}
 	return b
+}
+
+// getEnvRequired checks for an environment variable and completely terminates the application if it is empty.
+func getEnvRequired(key string) string {
+	value := os.Getenv(key)
+	if value == "" {
+		log.Fatalf("FATAL CONFIGURATION ERROR: Required environment variable %s is missing or empty.", key)
+	}
+	return value
 }
