@@ -52,6 +52,8 @@ tasks:
 
   db:up:
     desc: "Applies database migrations. Use `task db:up` to apply all pending migrations or `task db:up -- <version>` to migrate to a specific version."
+    deps:
+      - ensure-docker
     cmds:
       - |
         {{if .CLI_ARGS}}
@@ -62,6 +64,8 @@ tasks:
 
   db:down:
     desc: "Rollback the last migration"
+    deps:
+      - ensure-docker
     cmds:
       - |
         {{if .CLI_ARGS}}
@@ -78,6 +82,8 @@ tasks:
   db:reset:
     aliases: [db:res]
     desc: "Reset database (rollback all migrations)"
+    deps:
+      - ensure-docker
     prompt: "This will rollback all migrations. Are you sure?"
     cmds:
       - goose  reset
@@ -86,11 +92,15 @@ tasks:
   db:version:
     aliases: [db-v]
     desc: "Show current migration version"
+    deps:
+      - ensure-docker
     cmds:
       - goose version
 
   db:fix:
     desc: "Fix sequential numbering of migration files"
+    deps:
+      - ensure-docker
     cmds:
       - goose fix
 
