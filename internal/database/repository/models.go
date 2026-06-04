@@ -8,6 +8,46 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type BlocksHero struct {
+	ID         int64              `db:"id" json:"id"`
+	Heading    string             `db:"heading" json:"heading"`
+	Subheading pgtype.Text        `db:"subheading" json:"subheading"`
+	CtaLabel   pgtype.Text        `db:"cta_label" json:"cta_label"`
+	CtaUrl     pgtype.Text        `db:"cta_url" json:"cta_url"`
+	CreatedAt  pgtype.Timestamptz `db:"created_at" json:"created_at"`
+	UpdatedAt  pgtype.Timestamptz `db:"updated_at" json:"updated_at"`
+}
+
+type BlocksRichtext struct {
+	ID        int64              `db:"id" json:"id"`
+	Content   string             `db:"content" json:"content"`
+	Format    string             `db:"format" json:"format"`
+	CreatedAt pgtype.Timestamptz `db:"created_at" json:"created_at"`
+	UpdatedAt pgtype.Timestamptz `db:"updated_at" json:"updated_at"`
+}
+
+type Page struct {
+	ID             int64              `db:"id" json:"id"`
+	Title          string             `db:"title" json:"title"`
+	Slug           string             `db:"slug" json:"slug"`
+	Status         string             `db:"status" json:"status"`
+	SeoTitle       pgtype.Text        `db:"seo_title" json:"seo_title"`
+	SeoDescription pgtype.Text        `db:"seo_description" json:"seo_description"`
+	CreatedAt      pgtype.Timestamptz `db:"created_at" json:"created_at"`
+	UpdatedAt      pgtype.Timestamptz `db:"updated_at" json:"updated_at"`
+}
+
+type PagesBlock struct {
+	ID              int64              `db:"id" json:"id"`
+	PageID          int64              `db:"page_id" json:"page_id"`
+	BlockID         int64              `db:"block_id" json:"block_id"`
+	BlockCollection string             `db:"block_collection" json:"block_collection"`
+	SortOrder       int32              `db:"sort_order" json:"sort_order"`
+	HideBlock       bool               `db:"hide_block" json:"hide_block"`
+	CreatedAt       pgtype.Timestamptz `db:"created_at" json:"created_at"`
+	UpdatedAt       pgtype.Timestamptz `db:"updated_at" json:"updated_at"`
+}
+
 type Session struct {
 	Token  string             `db:"token" json:"token"`
 	Data   []byte             `db:"data" json:"data"`
