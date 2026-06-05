@@ -21,55 +21,61 @@ import (
 type Server struct {
 	e              *echo.Echo
 	cfg            *config.Config
-	authHandler    *handler.AuthHandler
 	sessionManager *scs.SessionManager
+	handlers       *handler.Handlers
 }
 
 func New(ctx context.Context, cfg *config.Config, pool *pgxpool.Pool) *Server {
 	e := echo.New()
 
-	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+	var logHandler slog.Handler
+	if cfg.Environment == "production" {
+		logHandler = slog.NewJSONHandler(os.Stdout, nil)
+	} else {
+		logHandler = slog.NewTextHandler(os.Stdout, nil)
+	}
+	appLogger := slog.New(logHandler)
+	slog.SetDefault(appLogger)
+
+	e.Logger = appLogger
 
 	sessionManager := session.NewManager(pool, cfg.SessionLifetime, cfg.SessionSecure, cfg.SessionCookie)
-
 	queries := repository.New(pool)
 
 	e.Use(middleware.Recover())
-
-	// CORS Strategy Setup
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins:     []string{"http://localhost:5173"},
 		AllowCredentials: true,
 	}))
 
-	// Force the Session State engine to wrap around every execution request context cleanly
 	e.Use(echo.WrapMiddleware(sessionManager.LoadAndSave))
 
-	authRegistry := initAuthRegistry(cfg, logger)
-
-	authHandler := handler.NewAuthHandler(
-		logger,
-		service.NewAuthService(queries),
-		sessionManager,
-		authRegistry,
-	)
+	authRegistry := initAuthRegistry(cfg)
+	services := service.NewServices(e.Logger, queries)
+	handlers := handler.NewHandler(e.Logger, services, sessionManager, authRegistry)
 
 	s := &Server{
 		e:              e,
 		cfg:            cfg,
-		authHandler:    authHandler,
 		sessionManager: sessionManager,
+		handlers:       handlers,
 	}
 	s.registerRoutes()
 
 	return s
 }
 
-func (s *Server) Start() error {
-	return s.e.Start(s.cfg.Addr)
+func (s *Server) Start(ctx context.Context) error {
+	cfg := echo.StartConfig{
+		Address:    s.cfg.Addr,
+		HideBanner: true,
+		HidePort:   false,
+	}
+
+	return cfg.Start(ctx, s.e)
 }
 
-func initAuthRegistry(cfg *config.Config, log *slog.Logger) *auth.Registry {
+func initAuthRegistry(cfg *config.Config) *auth.Registry {
 	registry := auth.NewRegistry()
 
 	// Register Zitadel provider first (priority)
@@ -84,7 +90,6 @@ func initAuthRegistry(cfg *config.Config, log *slog.Logger) *auth.Registry {
 			[]string{"openid", "profile", "email"},
 		)
 		registry.Register("zitadel", zitadelProvider)
-		log.Info("registered auth provider", "provider", "zitadel", "redirect_uri", zitadelProvider.RedirectURI())
 	}
 
 	if cfg.Google.ClientID != "" && cfg.Google.ClientSecret != "" {
@@ -98,7 +103,6 @@ func initAuthRegistry(cfg *config.Config, log *slog.Logger) *auth.Registry {
 			[]string{"openid", "profile", "email"},
 		)
 		registry.Register("google", googleProvider)
-		log.Info("registered auth provider", "provider", "google", "redirect_uri", googleProvider.RedirectURI())
 	}
 
 	return registry

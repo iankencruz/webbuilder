@@ -23,7 +23,7 @@ func main() {
 
 	app := server.New(ctx, cfg, pool)
 
-	if err := app.Start(); err != nil {
+	if err := app.Start(ctx); err != nil {
 		log.Fatalf("start server: %v", err)
 	}
 }

@@ -99,10 +99,6 @@ func RequestLogger() echo.MiddlewareFunc {
 				cBold+cYellow, uri, cReset,
 			)
 
-			if v.Error != nil {
-				fmt.Printf("  %serror:%s %s%v%s\n", cWhite, cReset, cBold+cRed, v.Error, cReset)
-			}
-
 			return nil
 		},
 	})

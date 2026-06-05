@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
+	"log/slog"
 
 	"github.com/iankencruz/webbuilder/internal/database/repository"
 	"github.com/jackc/pgx/v5"
@@ -21,15 +21,19 @@ type AuthRepository interface {
 }
 
 type AuthService struct {
-	repo AuthRepository
+	logger *slog.Logger
+	repo   AuthRepository
 }
 
-func NewAuthService(repo AuthRepository) *AuthService {
-	return &AuthService{repo: repo}
+func NewAuthService(logger *slog.Logger, repo AuthRepository) *AuthService {
+	return &AuthService{
+		logger: logger,
+		repo:   repo,
+	}
 }
 
 func (s *AuthService) FindOrCreateUser(ctx context.Context, sub, provider, email, firstName, lastName, avatarURL string) (repository.User, error) {
-	log.Printf("DEBUG FindOrCreateUser sub=%s provider=%s email=%s firstName=%s lastname=%s", sub, provider, email, firstName, lastName)
+	s.logger.Debug("FindOrCreateUser", "sub:", sub, "provider", provider, "email", email, "firstName", firstName, "lastname", lastName)
 
 	_, err := s.repo.GetUserBySub(ctx, sub)
 	if err == nil {
@@ -43,10 +47,10 @@ func (s *AuthService) FindOrCreateUser(ctx context.Context, sub, provider, email
 	}
 
 	if !errors.Is(err, pgx.ErrNoRows) {
-		log.Printf("DEBUG unexpected repository error: %v", err)
+		s.logger.Error("unexpected repository error", "error", err)
 		return repository.User{}, fmt.Errorf("looking up user by sub: %w", err)
 	}
-	log.Printf("DEBUG creating new user")
+	s.logger.Debug("creating new user")
 	return s.repo.CreateUser(ctx, repository.CreateUserParams{
 		Sub:       sub,
 		Provider:  provider,

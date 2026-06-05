@@ -9,7 +9,7 @@ import (
 )
 
 func (s *Server) registerRoutes() {
-	s.e.Use(authmiddleware.CustomRequestLogger())
+	s.e.Use(authmiddleware.RequestLogger())
 
 	s.e.GET("/health", func(c *echo.Context) error {
 		return c.JSON(http.StatusOK, map[string]any{"status": "ok"})
@@ -18,9 +18,9 @@ func (s *Server) registerRoutes() {
 	api := s.e.Group("/api")
 
 	auth := api.Group("/auth")
-	auth.POST("/logout", s.authHandler.Logout)
-	auth.GET("/login/:provider", s.authHandler.OAuthLogin)
-	auth.GET("/callback/:provider", s.authHandler.OAuthCallback)
+	auth.POST("/logout", s.handlers.Auth.Logout)
+	auth.GET("/login/:provider", s.handlers.Auth.OAuthLogin)
+	auth.GET("/callback/:provider", s.handlers.Auth.OAuthCallback)
 
-	api.GET("/me", s.authHandler.Me, authmiddleware.RequireAuth(s.sessionManager))
+	api.GET("/me", s.handlers.Auth.Me, authmiddleware.RequireAuth(s.sessionManager))
 }

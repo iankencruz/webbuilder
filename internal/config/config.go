@@ -26,6 +26,7 @@ type ZitadelConfig struct {
 
 type Config struct {
 	Addr            string
+	Environment     string
 	DatabaseURL     string
 	MigrationsDir   string
 	SessionLifetime time.Duration
@@ -40,6 +41,7 @@ type Config struct {
 func Load() *Config {
 	return &Config{
 		Addr:            getEnv("APP_ADDR", ":8080"),
+		Environment:     getEnv("ENVIRONMENT", "development"),
 		DatabaseURL:     getEnv("DATABASE_URL", "postgres://user:pass@localhost:5432/app?sslmode=disable"),
 		MigrationsDir:   getEnv("MIGRATIONS_DIR", "db/migrations"),
 		SessionLifetime: getEnvDuration("SESSION_LIFETIME_HOURS", 24) * time.Hour,
