@@ -27,9 +27,9 @@ func (s *Server) registerRoutes() {
 	pages := api.Group("/pages", authmiddleware.RequireAuth(s.sessionManager))
 	pages.GET("", s.handlers.Page.ListPages)
 	pages.POST("", s.handlers.Page.CreatePage)
-	pages.GET("/:id", s.handlers.Page.GetPage)
-	pages.PUT("/:id", s.handlers.Page.UpdatePage)
-	pages.DELETE("/:id", s.handlers.Page.DeletePage)
+	pages.GET("/:slug", s.handlers.Page.GetPage)
+	pages.PUT("/:slug", s.handlers.Page.UpdatePage)
+	pages.DELETE("/:slug", s.handlers.Page.DeletePage)
 
 	// Page Blocks (junction)
 	blocks := pages.Group("/:id/blocks")
