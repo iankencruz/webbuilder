@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"log/slog"
 	"net/http"
 
@@ -9,9 +10,19 @@ import (
 	"github.com/labstack/echo/v5"
 )
 
+type PageServicer interface {
+	CreatePage(ctx context.Context, arg repository.CreatePageParams) (repository.Page, error)
+	GetPageByID(ctx context.Context, id int64) (repository.Page, error)
+	GetPageBySlug(ctx context.Context, slug string) (repository.Page, error)
+	ListPages(ctx context.Context) ([]repository.Page, error)
+	UpdatePage(ctx context.Context, arg repository.UpdatePageParams) (repository.Page, error)
+	DeletePageByID(ctx context.Context, id int64) error
+	DeletePageBySlug(ctx context.Context, slug string) error
+}
+
 type PageHandler struct {
 	logger   *slog.Logger
-	services *service.PageService
+	services PageServicer
 }
 
 func NewPageHandler(log *slog.Logger, services *service.PageService) *PageHandler {

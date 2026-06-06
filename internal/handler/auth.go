@@ -10,17 +10,22 @@ import (
 	"github.com/labstack/echo/v5"
 
 	"github.com/iankencruz/webbuilder/internal/auth"
-	"github.com/iankencruz/webbuilder/internal/service"
+	"github.com/iankencruz/webbuilder/internal/database/repository"
 )
+
+type AuthServicer interface {
+	FindOrCreateUser(ctx echo.Context, sub, email, firstName, lastName, avatarURL, provider string) (repository.User, error)
+	GetByID(ctx echo.Context, id int64) (repository.User, error)
+}
 
 type AuthHandler struct {
 	logger       *slog.Logger
-	authService  *service.AuthService
+	authService  AuthServicer
 	sessions     *scs.SessionManager
 	authRegistry *auth.Registry
 }
 
-func NewAuthHandler(log *slog.Logger, authService *service.AuthService, sessions *scs.SessionManager, oidcRegistry *auth.Registry) *AuthHandler {
+func NewAuthHandler(log *slog.Logger, authService AuthServicer, sessions *scs.SessionManager, oidcRegistry *auth.Registry) *AuthHandler {
 	return &AuthHandler{
 		logger:       log,
 		authService:  authService,

@@ -5,17 +5,25 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/iankencruz/webbuilder/internal/blocks"
 	"github.com/iankencruz/webbuilder/internal/database/repository"
-	"github.com/iankencruz/webbuilder/internal/service"
 	"github.com/labstack/echo/v5"
 )
 
-type BlockHandler struct {
-	logger   *slog.Logger
-	services *service.BlockService
+type BlockServicer interface {
+	Resolve(collection string) (blocks.Block, error)
+	AddBlockToPage(ctx echo.Context, arg repository.AddBlockToPageParams) (repository.PagesBlock, error)
+	UpdatePageBlock(ctx echo.Context, arg repository.UpdatePageBlockParams) (repository.PagesBlock, error)
+	DeletePageBlock(ctx echo.Context, junctionID int64) error
+	ReorderPageBlocks(ctx echo.Context, arg repository.ReorderPageBlocksParams) error
 }
 
-func NewBlockHandler(log *slog.Logger, services *service.BlockService) *BlockHandler {
+type BlockHandler struct {
+	logger   *slog.Logger
+	services BlockServicer
+}
+
+func NewBlockHandler(log *slog.Logger, services BlockServicer) *BlockHandler {
 	return &BlockHandler{
 		logger:   log,
 		services: services,
