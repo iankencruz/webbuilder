@@ -9,14 +9,24 @@ import (
 	"github.com/iankencruz/webbuilder/internal/database/repository"
 )
 
+type BlockRepository interface {
+	AddBlockToPage(ctx context.Context, arg repository.AddBlockToPageParams) (repository.PagesBlock, error)
+	GetPageBlocks(ctx context.Context, pageID int64) ([]repository.PagesBlock, error)
+	UpdatePageBlock(ctx context.Context, arg repository.UpdatePageBlockParams) (repository.PagesBlock, error)
+	DeletePageBlock(ctx context.Context, id int64) error
+	ReorderPageBlocks(ctx context.Context, arg repository.ReorderPageBlocksParams) error
+}
+
 type BlockService struct {
 	queries  *repository.Queries
+	repo     BlockRepository
 	registry map[string]blocks.BlockType
 }
 
 func NewBlockService(logger *slog.Logger, q *repository.Queries, types []blocks.BlockType) *BlockService {
 	s := &BlockService{
 		queries:  q,
+		repo:     q,
 		registry: make(map[string]blocks.BlockType),
 	}
 
@@ -40,7 +50,7 @@ func (s *BlockService) Resolve(collection string) (blocks.Block, error) {
 // AddBlockToPage adds a block to a page in the database using the provided parameters and returns the newly created PagesBlock. If an error occurs during
 // the operation, it returns an error.
 func (s *BlockService) AddBlockToPage(ctx context.Context, arg repository.AddBlockToPageParams) (repository.PagesBlock, error) {
-	return s.queries.AddBlockToPage(ctx, arg)
+	return s.repo.AddBlockToPage(ctx, arg)
 }
 
 // GetPageBlocks retrieves all blocks associated with a specific page from the
@@ -48,7 +58,7 @@ func (s *BlockService) AddBlockToPage(ctx context.Context, arg repository.AddBlo
 // successful, or an error if there is an issue with the database query or if
 // the page does not exist.
 func (s *BlockService) GetPageBlocks(ctx context.Context, pageID int64) ([]repository.PagesBlock, error) {
-	return s.queries.GetPageBlocks(ctx, pageID)
+	return s.repo.GetPageBlocks(ctx, pageID)
 }
 
 // UpdatePageBlock updates the details of a block associated with a page in the
@@ -56,14 +66,14 @@ func (s *BlockService) GetPageBlocks(ctx context.Context, pageID int64) ([]repos
 // PagesBlock if successful, or an error if there is an issue with the database
 // query or if the block does not exist.
 func (s *BlockService) UpdatePageBlock(ctx context.Context, arg repository.UpdatePageBlockParams) (repository.PagesBlock, error) {
-	return s.queries.UpdatePageBlock(ctx, arg)
+	return s.repo.UpdatePageBlock(ctx, arg)
 }
 
 // DeletePageBlock removes a block from a page in the database using the
 // provided block ID. It returns an error if there is an issue with the database
 // query or if the block does not exist.
 func (s *BlockService) DeletePageBlock(ctx context.Context, id int64) error {
-	return s.queries.DeletePageBlock(ctx, id)
+	return s.repo.DeletePageBlock(ctx, id)
 }
 
 // ReorderPageBlocks updates the order of blocks on a page in the database using the provided reorder parameters.
@@ -71,5 +81,5 @@ func (s *BlockService) DeletePageBlock(ctx context.Context, id int64) error {
 // This method allows for the dynamic reordering of blocks on a page, enabling users to customize the layout
 // of their pages by changing the order of blocks as needed.
 func (s *BlockService) ReorderPageBlocks(ctx context.Context, arg repository.ReorderPageBlocksParams) error {
-	return s.queries.ReorderPageBlocks(ctx, arg)
+	return s.repo.ReorderPageBlocks(ctx, arg)
 }
