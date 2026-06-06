@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"crypto/rand"
 	"encoding/base64"
 	"log/slog"
@@ -14,8 +15,8 @@ import (
 )
 
 type AuthServicer interface {
-	FindOrCreateUser(ctx echo.Context, sub, email, firstName, lastName, avatarURL, provider string) (repository.User, error)
-	GetByID(ctx echo.Context, id int64) (repository.User, error)
+	FindOrCreateUser(ctx context.Context, sub, email, firstName, lastName, avatarURL, provider string) (repository.User, error)
+	GetByID(ctx context.Context, id int64) (repository.User, error)
 }
 
 type AuthHandler struct {

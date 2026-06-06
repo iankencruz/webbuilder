@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"log/slog"
 	"net/http"
 	"strconv"
@@ -12,10 +13,10 @@ import (
 
 type BlockServicer interface {
 	Resolve(collection string) (blocks.Block, error)
-	AddBlockToPage(ctx echo.Context, arg repository.AddBlockToPageParams) (repository.PagesBlock, error)
-	UpdatePageBlock(ctx echo.Context, arg repository.UpdatePageBlockParams) (repository.PagesBlock, error)
-	DeletePageBlock(ctx echo.Context, junctionID int64) error
-	ReorderPageBlocks(ctx echo.Context, arg repository.ReorderPageBlocksParams) error
+	AddBlockToPage(ctx context.Context, arg repository.AddBlockToPageParams) (repository.PagesBlock, error)
+	UpdatePageBlock(ctx context.Context, arg repository.UpdatePageBlockParams) (repository.PagesBlock, error)
+	DeletePageBlock(ctx context.Context, junctionID int64) error
+	ReorderPageBlocks(ctx context.Context, arg repository.ReorderPageBlocksParams) error
 }
 
 type BlockHandler struct {
