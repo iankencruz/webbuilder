@@ -17,13 +17,9 @@
 {#if auth.user}
   <Sidebar.Provider>
     <AppSidebar />
-
     <Sidebar.Inset>
-      <!-- Topbar -->
       <header class="h-12 bg-card flex items-center gap-4 px-4 shrink-0">
         <Sidebar.Trigger />
-
-        <!-- Breadcrumb -->
         <div class="flex items-center gap-1.5 text-sm text-muted-foreground">
           <span>Admin</span>
           <span>›</span>
@@ -31,9 +27,7 @@
             {page.url.pathname.split('/').at(-1)}
           </span>
         </div>
-
         <div class="ml-auto flex items-center gap-3">
-          <!-- Search -->
           <div class="relative hidden sm:block">
             <input
               type="text"
@@ -54,8 +48,6 @@
               />
             </svg>
           </div>
-
-          <!-- Notifications -->
           <button
             type="button"
             aria-label="Notifications"
@@ -80,8 +72,6 @@
           </button>
         </div>
       </header>
-
-      <!-- Page content -->
       <main class="flex-1 overflow-y-auto p-6">
         {@render children()}
       </main>

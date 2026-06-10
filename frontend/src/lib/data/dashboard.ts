@@ -36,12 +36,7 @@ export const navGroups: NavGroup[] = [
   },
   {
     label: 'Manage',
-    items: [
-      { title: 'Projects', href: '/admin/projects', icon: FolderIcon },
-      { title: 'Tasks', href: '/admin/tasks', icon: CheckSquareIcon },
-      { title: 'Calendar', href: '/admin/calendar', icon: CalendarIcon },
-      { title: 'Messages', href: '/admin/messages', icon: MessageSquareIcon },
-    ],
+    items: [{ title: 'Pages', href: '/admin/pages', icon: FolderIcon }],
   },
   {
     label: 'Settings',

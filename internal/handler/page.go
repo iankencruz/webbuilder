@@ -116,10 +116,6 @@ func (h *PageHandler) DeletePage(c *echo.Context) error {
 	err := h.services.DeletePageBySlug(c.Request().Context(), slug)
 	if err != nil {
 
-		if errors.Is(err, pgx.ErrNoRows) {
-			return c.JSON(http.StatusNotFound, map[string]string{"error": "page not found"})
-		}
-
 		h.logger.Error("failed to delete page", "error", err)
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "failed to delete page"})
 	}

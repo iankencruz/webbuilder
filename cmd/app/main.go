@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
@@ -17,7 +18,7 @@ func main() {
 
 	pool, err := database.Setup(ctx, cfg.DatabaseURL, cfg.MigrationsDir)
 	if err != nil {
-		log.Fatalf("setup database: %v", err)
+		fmt.Printf("setup database: %v", err)
 	}
 	defer pool.Close()
 

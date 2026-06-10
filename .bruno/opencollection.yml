@@ -20,7 +20,7 @@ request:
       value: session={{session}}
   variables:
     - name: session
-      value: CpxEUA4Tsk42eStuiWJhKCsaVfH7yronhCL4FqtgpkE
+      value: Ob8KTfIasFJtMDhUG_WlID7X3DyVP9YV8ttokbKH4oo
 bundled: false
 extensions:
   bruno:
