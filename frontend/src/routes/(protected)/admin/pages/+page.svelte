@@ -9,7 +9,8 @@
   import * as AlertDialog from '$lib/components/ui/alert-dialog';
   import ActionDialog from '$lib/components/ActionDialog.svelte';
   import AlertDialogDescription from '$lib/components/ui/alert-dialog/alert-dialog-description.svelte';
-  import AlertDialogAction from '$lib/components/ui/alert-dialog/alert-dialog-action.svelte';
+  import DataTable from '$lib/components/DataTable/DataTable.svelte';
+  import Badge from '$lib/components/ui/badge/badge.svelte';
 
   let { data } = $props();
 
@@ -90,6 +91,21 @@
   }
 </script>
 
+{#snippet statusBadge({ value }: { value: unknown; row: Page })}
+  {@const status = value as string}
+  <Badge
+    variant={status === 'published'
+      ? 'success'
+      : status === 'draft'
+        ? 'draft'
+        : status === 'archived'
+          ? 'archived'
+          : 'outline'}
+  >
+    {status}
+  </Badge>
+{/snippet}
+
 <div class="space-y-6">
   <!-- Header -->
   <div class="flex items-center justify-between">
@@ -111,60 +127,20 @@
       </Button>
     </div>
   {:else}
-    <div class="rounded-lg border border-border overflow-hidden">
-      <table class="w-full text-sm">
-        <thead class="bg-muted text-muted-foreground">
-          <tr>
-            <th class="text-left px-4 py-3 font-medium">Title</th>
-            <th class="text-left px-4 py-3 font-medium">Slug</th>
-            <th class="text-left px-4 py-3 font-medium">Status</th>
-            <th class="text-left px-4 py-3 font-medium">Updated</th>
-            <th class="px-4 py-3"></th>
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-border">
-          {#each localPages as page (page.id)}
-            <tr class="hover:bg-muted/50 transition-colors">
-              <td class="px-4 py-3 font-medium text-foreground">{page.title}</td
-              >
-              <td class="px-4 py-3 text-muted-foreground">/{page.slug}</td>
-              <td class="px-4 py-3">
-                <span
-                  class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium
-                  {page.status === 'published'
-                    ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-                    : page.status === 'archived'
-                      ? 'bg-muted text-muted-foreground'
-                      : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'}"
-                >
-                  {page.status}
-                </span>
-              </td>
-              <td class="px-4 py-3 text-muted-foreground">
-                {new Date(page.updated_at).toLocaleDateString()}
-              </td>
-              <td class="px-4 py-3 text-right space-x-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onclick={() => goto(`/admin/pages/${page.id}`)}
-                >
-                  Edit
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  class="text-destructive hover:bg-destructive/10"
-                  onclick={() => triggerDeleteConfirm(page.slug)}
-                >
-                  Delete
-                </Button>
-              </td>
-            </tr>
-          {/each}
-        </tbody>
-      </table>
-    </div>
+    <DataTable
+      data={localPages}
+      hiddenColumns={['id', 'seo_title', 'seo_description']}
+      filterColumn="title"
+      filterPlaceholder="Search pages..."
+      columnOverrides={{ status: { cellSnippet: statusBadge } }}
+      onRowAction={(action, row) => {
+        if (action === 'edit') {
+          goto(`/admin/pages/${row.id}`);
+        } else if (action === 'delete') {
+          triggerDeleteConfirm(row.slug as string);
+        }
+      }}
+    />
   {/if}
 </div>
 
