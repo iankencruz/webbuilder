@@ -19,15 +19,14 @@ import (
 )
 
 type services struct {
-	auth  *auth.AuthService
-	page  *pages.PageService
+	auth  *auth.Service
 	block *blocks.BlockService
 }
 
 type handlers struct {
-	auth  *auth.AuthHandler
-	page  *pages.PageHandler
-	block *blocks.BlockHandler
+	auth  *auth.Handler
+	page  *pages.Handler
+	block *blocks.Handler
 }
 
 type Server struct {
@@ -66,15 +65,14 @@ func New(ctx context.Context, cfg *config.Config, pool *pgxpool.Pool) *Server {
 	authRegistry := initAuthRegistry(cfg)
 
 	svcs := &services{
-		auth:  auth.NewAuthService(appLogger, queries),
-		page:  pages.NewPageService(appLogger, queries),
-		block: blocks.NewBlockService(appLogger, queries, []blocks.BlockType{blocks.RichText}),
+		auth:  auth.NewService(appLogger, queries),
+		block: blocks.NewService(appLogger, queries, []blocks.BlockType{blocks.RichText}),
 	}
 
 	hdlrs := &handlers{
-		auth:  auth.NewAuthHandler(appLogger, svcs.auth, sessionManager, authRegistry),
-		page:  pages.NewPageHandler(appLogger, svcs.page),
-		block: blocks.NewBlockHandler(appLogger, svcs.block),
+		auth:  auth.NewHandler(appLogger, svcs.auth, sessionManager, authRegistry),
+		page:  pages.NewHandler(appLogger, queries),
+		block: blocks.NewHandler(appLogger, svcs.block),
 	}
 
 	s := &Server{

@@ -1,7 +1,6 @@
 package blocks
 
 import (
-	"context"
 	"log/slog"
 	"net/http"
 	"strconv"
@@ -10,27 +9,19 @@ import (
 	"github.com/labstack/echo/v5"
 )
 
-type BlockServicer interface {
-	Resolve(collection string) (Block, error)
-	AddBlockToPage(ctx context.Context, arg repository.AddBlockToPageParams) (repository.PagesBlock, error)
-	UpdatePageBlock(ctx context.Context, arg repository.UpdatePageBlockParams) (repository.PagesBlock, error)
-	DeletePageBlock(ctx context.Context, junctionID int64) error
-	ReorderPageBlocks(ctx context.Context, arg repository.ReorderPageBlocksParams) error
-}
-
-type BlockHandler struct {
+type Handler struct {
 	logger   *slog.Logger
-	services BlockServicer
+	services *BlockService
 }
 
-func NewBlockHandler(log *slog.Logger, services BlockServicer) *BlockHandler {
-	return &BlockHandler{
+func NewHandler(log *slog.Logger, services *BlockService) *Handler {
+	return &Handler{
 		logger:   log,
 		services: services,
 	}
 }
 
-func (h *BlockHandler) CreateBlock(c *echo.Context) error {
+func (h *Handler) CreateBlock(c *echo.Context) error {
 	collection := c.Param("collection")
 
 	block, err := h.services.Resolve(collection)
@@ -53,7 +44,7 @@ func (h *BlockHandler) CreateBlock(c *echo.Context) error {
 	return c.JSON(http.StatusCreated, map[string]any{"id": id})
 }
 
-func (h *BlockHandler) GetBlock(c *echo.Context) error {
+func (h *Handler) GetBlock(c *echo.Context) error {
 	collection := c.Param("type")
 	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
 	if err != nil {
@@ -76,7 +67,7 @@ func (h *BlockHandler) GetBlock(c *echo.Context) error {
 	return c.JSON(http.StatusOK, result)
 }
 
-func (h *BlockHandler) UpdateBlock(c *echo.Context) error {
+func (h *Handler) UpdateBlock(c *echo.Context) error {
 	collection := c.Param("type")
 	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
 	if err != nil {
@@ -105,7 +96,7 @@ func (h *BlockHandler) UpdateBlock(c *echo.Context) error {
 }
 
 // --- Junction Handlers ---
-func (h *BlockHandler) AddBlockToPage(c *echo.Context) error {
+func (h *Handler) AddBlockToPage(c *echo.Context) error {
 	pageID, err := strconv.ParseInt(c.Param("id"), 10, 64)
 	if err != nil {
 		h.logger.Error("invalid page ID", "id", c.Param("id"), "error", err)
@@ -129,7 +120,7 @@ func (h *BlockHandler) AddBlockToPage(c *echo.Context) error {
 	return c.JSON(http.StatusOK, junction)
 }
 
-func (h *BlockHandler) UpdatePageBlock(c *echo.Context) error {
+func (h *Handler) UpdatePageBlock(c *echo.Context) error {
 	junctionID, err := strconv.ParseInt(c.Param("junctionID"), 10, 64)
 	if err != nil {
 		h.logger.Error("invalid junction ID", "id", c.Param("junctionID"), "error", err)
@@ -153,7 +144,7 @@ func (h *BlockHandler) UpdatePageBlock(c *echo.Context) error {
 	return c.JSON(http.StatusOK, junction)
 }
 
-func (h *BlockHandler) DeletePageBlock(c *echo.Context) error {
+func (h *Handler) DeletePageBlock(c *echo.Context) error {
 	junctionID, err := strconv.ParseInt(c.Param("junctionID"), 10, 64)
 	if err != nil {
 		h.logger.Error("invalid junction ID", "id", c.Param("junctionID"), "error", err)
@@ -168,7 +159,7 @@ func (h *BlockHandler) DeletePageBlock(c *echo.Context) error {
 	return c.NoContent(http.StatusNoContent)
 }
 
-func (h *BlockHandler) ReorderPageBlocks(c *echo.Context) error {
+func (h *Handler) ReorderPageBlocks(c *echo.Context) error {
 	pageID, err := strconv.ParseInt(c.Param("id"), 10, 64)
 	if err != nil {
 		h.logger.Error("invalid page ID", "id", c.Param("id"), "error", err)

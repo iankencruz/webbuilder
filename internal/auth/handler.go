@@ -1,7 +1,6 @@
 package auth
 
 import (
-	"context"
 	"crypto/rand"
 	"encoding/base64"
 	"log/slog"
@@ -9,24 +8,17 @@ import (
 
 	"github.com/alexedwards/scs/v2"
 	"github.com/labstack/echo/v5"
-
-	"github.com/iankencruz/webbuilder/internal/database/repository"
 )
 
-type AuthServicer interface {
-	FindOrCreateUser(ctx context.Context, sub, email, firstName, lastName, avatarURL, provider string) (repository.User, error)
-	GetByID(ctx context.Context, id int64) (repository.User, error)
-}
-
-type AuthHandler struct {
+type Handler struct {
 	logger       *slog.Logger
-	authService  AuthServicer
+	authService  *Service
 	sessions     *scs.SessionManager
 	authRegistry *Registry
 }
 
-func NewAuthHandler(log *slog.Logger, authService AuthServicer, sessions *scs.SessionManager, oidcRegistry *Registry) *AuthHandler {
-	return &AuthHandler{
+func NewHandler(log *slog.Logger, authService *Service, sessions *scs.SessionManager, oidcRegistry *Registry) *Handler {
+	return &Handler{
 		logger:       log,
 		authService:  authService,
 		sessions:     sessions,
@@ -34,7 +26,7 @@ func NewAuthHandler(log *slog.Logger, authService AuthServicer, sessions *scs.Se
 	}
 }
 
-func (h *AuthHandler) OAuthLogin(c *echo.Context) error {
+func (h *Handler) OAuthLogin(c *echo.Context) error {
 	providerName := c.Param("provider")
 	if providerName == "" {
 		providerName = c.Param("provider")
@@ -71,7 +63,7 @@ func (h *AuthHandler) OAuthLogin(c *echo.Context) error {
 	return c.Redirect(http.StatusTemporaryRedirect, url)
 }
 
-func (h *AuthHandler) OAuthCallback(c *echo.Context) error {
+func (h *Handler) OAuthCallback(c *echo.Context) error {
 	ctx := c.Request().Context()
 
 	// retrieve and pop state, nonce, provider from session
@@ -127,12 +119,12 @@ func (h *AuthHandler) OAuthCallback(c *echo.Context) error {
 	return c.Redirect(http.StatusTemporaryRedirect, postLoginURL)
 }
 
-func (h *AuthHandler) Logout(c *echo.Context) error {
+func (h *Handler) Logout(c *echo.Context) error {
 	h.sessions.Remove(c.Request().Context(), "user_id")
 	return c.NoContent(http.StatusNoContent)
 }
 
-func (h *AuthHandler) Me(c *echo.Context) error {
+func (h *Handler) Me(c *echo.Context) error {
 	userID := h.sessions.GetInt64(c.Request().Context(), "user_id")
 	if userID == 0 {
 		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "unauthorized"})

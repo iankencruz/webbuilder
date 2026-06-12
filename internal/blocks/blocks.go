@@ -30,7 +30,7 @@ type BlockType struct {
 }
 
 // --- Service ---
-type BlockRepository interface {
+type Repository interface {
 	AddBlockToPage(ctx context.Context, arg repository.AddBlockToPageParams) (repository.PagesBlock, error)
 	GetPageBlocks(ctx context.Context, pageID int64) ([]repository.PagesBlock, error)
 	UpdatePageBlock(ctx context.Context, arg repository.UpdatePageBlockParams) (repository.PagesBlock, error)
@@ -40,11 +40,11 @@ type BlockRepository interface {
 
 type BlockService struct {
 	queries  *repository.Queries
-	repo     BlockRepository
+	repo     Repository
 	registry map[string]BlockType
 }
 
-func NewBlockService(logger *slog.Logger, q *repository.Queries, types []BlockType) *BlockService {
+func NewService(logger *slog.Logger, q *repository.Queries, types []BlockType) *BlockService {
 	s := &BlockService{
 		queries:  q,
 		repo:     q,

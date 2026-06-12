@@ -150,7 +150,7 @@ func TestFindOrCreateUser(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			service := NewAuthService(logger, tt.repo)
+			service := NewService(logger, tt.repo)
 
 			got, err := service.FindOrCreateUser(ctx, tt.sub, tt.provider, tt.email, tt.firstName, tt.lastName, tt.avatarURL)
 
@@ -247,7 +247,7 @@ func TestGetByID(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			service := NewAuthService(logger, tt.repo)
+			service := NewService(logger, tt.repo)
 
 			got, err := service.GetByID(ctx, tt.id)
 

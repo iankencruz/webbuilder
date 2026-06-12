@@ -20,19 +20,19 @@ type AuthRepository interface {
 	UpdateUser(ctx context.Context, arg repository.UpdateUserParams) (repository.User, error)
 }
 
-type AuthService struct {
+type Service struct {
 	logger *slog.Logger
 	repo   AuthRepository
 }
 
-func NewAuthService(logger *slog.Logger, repo AuthRepository) *AuthService {
-	return &AuthService{
+func NewService(logger *slog.Logger, repo AuthRepository) *Service {
+	return &Service{
 		logger: logger,
 		repo:   repo,
 	}
 }
 
-func (s *AuthService) FindOrCreateUser(ctx context.Context, sub, provider, email, firstName, lastName, avatarURL string) (repository.User, error) {
+func (s *Service) FindOrCreateUser(ctx context.Context, sub, provider, email, firstName, lastName, avatarURL string) (repository.User, error) {
 	s.logger.Debug("FindOrCreateUser", "sub:", sub, "provider", provider, "email", email, "firstName", firstName, "lastname", lastName)
 
 	_, err := s.repo.GetUserBySub(ctx, sub)
@@ -61,6 +61,6 @@ func (s *AuthService) FindOrCreateUser(ctx context.Context, sub, provider, email
 	})
 }
 
-func (s *AuthService) GetByID(ctx context.Context, id int64) (repository.User, error) {
+func (s *Service) GetByID(ctx context.Context, id int64) (repository.User, error) {
 	return s.repo.GetUserByID(ctx, id)
 }
