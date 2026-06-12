@@ -1,4 +1,4 @@
-package handler
+package auth
 
 import (
 	"context"
@@ -10,7 +10,6 @@ import (
 	"github.com/alexedwards/scs/v2"
 	"github.com/labstack/echo/v5"
 
-	"github.com/iankencruz/webbuilder/internal/auth"
 	"github.com/iankencruz/webbuilder/internal/database/repository"
 )
 
@@ -23,10 +22,10 @@ type AuthHandler struct {
 	logger       *slog.Logger
 	authService  AuthServicer
 	sessions     *scs.SessionManager
-	authRegistry *auth.Registry
+	authRegistry *Registry
 }
 
-func NewAuthHandler(log *slog.Logger, authService AuthServicer, sessions *scs.SessionManager, oidcRegistry *auth.Registry) *AuthHandler {
+func NewAuthHandler(log *slog.Logger, authService AuthServicer, sessions *scs.SessionManager, oidcRegistry *Registry) *AuthHandler {
 	return &AuthHandler{
 		logger:       log,
 		authService:  authService,

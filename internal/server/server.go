@@ -11,18 +11,31 @@ import (
 	"github.com/labstack/echo/v5/middleware"
 
 	"github.com/iankencruz/webbuilder/internal/auth"
+	"github.com/iankencruz/webbuilder/internal/blocks"
 	"github.com/iankencruz/webbuilder/internal/config"
 	"github.com/iankencruz/webbuilder/internal/database/repository"
-	"github.com/iankencruz/webbuilder/internal/handler"
-	"github.com/iankencruz/webbuilder/internal/service"
+	"github.com/iankencruz/webbuilder/internal/pages"
 	"github.com/iankencruz/webbuilder/internal/session"
 )
+
+type services struct {
+	auth  *auth.AuthService
+	page  *pages.PageService
+	block *blocks.BlockService
+}
+
+type handlers struct {
+	auth  *auth.AuthHandler
+	page  *pages.PageHandler
+	block *blocks.BlockHandler
+}
 
 type Server struct {
 	e              *echo.Echo
 	cfg            *config.Config
 	sessionManager *scs.SessionManager
-	handlers       *handler.Handlers
+	handlers       *handlers
+	services       *services
 }
 
 func New(ctx context.Context, cfg *config.Config, pool *pgxpool.Pool) *Server {
@@ -51,14 +64,25 @@ func New(ctx context.Context, cfg *config.Config, pool *pgxpool.Pool) *Server {
 	e.Use(echo.WrapMiddleware(sessionManager.LoadAndSave))
 
 	authRegistry := initAuthRegistry(cfg)
-	services := service.NewServices(e.Logger, queries)
-	handlers := handler.NewHandler(e.Logger, services, sessionManager, authRegistry)
+
+	svcs := &services{
+		auth:  auth.NewAuthService(appLogger, queries),
+		page:  pages.NewPageService(appLogger, queries),
+		block: blocks.NewBlockService(appLogger, queries, []blocks.BlockType{blocks.RichText}),
+	}
+
+	hdlrs := &handlers{
+		auth:  auth.NewAuthHandler(appLogger, svcs.auth, sessionManager, authRegistry),
+		page:  pages.NewPageHandler(appLogger, svcs.page),
+		block: blocks.NewBlockHandler(appLogger, svcs.block),
+	}
 
 	s := &Server{
 		e:              e,
 		cfg:            cfg,
 		sessionManager: sessionManager,
-		handlers:       handlers,
+		services:       svcs,
+		handlers:       hdlrs,
 	}
 	s.registerRoutes()
 

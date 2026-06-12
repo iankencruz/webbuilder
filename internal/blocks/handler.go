@@ -1,4 +1,4 @@
-package handler
+package blocks
 
 import (
 	"context"
@@ -6,13 +6,12 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/iankencruz/webbuilder/internal/blocks"
 	"github.com/iankencruz/webbuilder/internal/database/repository"
 	"github.com/labstack/echo/v5"
 )
 
 type BlockServicer interface {
-	Resolve(collection string) (blocks.Block, error)
+	Resolve(collection string) (Block, error)
 	AddBlockToPage(ctx context.Context, arg repository.AddBlockToPageParams) (repository.PagesBlock, error)
 	UpdatePageBlock(ctx context.Context, arg repository.UpdatePageBlockParams) (repository.PagesBlock, error)
 	DeletePageBlock(ctx context.Context, junctionID int64) error
