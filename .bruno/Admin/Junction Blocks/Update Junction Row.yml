@@ -1,0 +1,29 @@
+info:
+  name: Update Junction Row
+  type: http
+  seq: 3
+
+http:
+  method: PUT
+  url: http://localhost:8080/api/pages/:page_id/blocks/:junction_id
+  params:
+    - name: junction_id
+      value: "10"
+      type: path
+    - name: page_id
+      value: "2"
+      type: path
+  body:
+    type: json
+    data: |-
+      {
+        "hide_block": false,
+        "sort_order": 3
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

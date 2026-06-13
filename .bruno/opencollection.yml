@@ -18,9 +18,6 @@ request:
   headers:
     - name: Cookie
       value: session={{session}}
-  variables:
-    - name: session
-      value: T4EVFM2Ia47yJE2Krz40PvPIWgrGgu5jJ_Sk4kRm2wA
 bundled: false
 extensions:
   bruno:

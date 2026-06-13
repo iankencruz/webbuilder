@@ -1,0 +1,10 @@
+info:
+  name: Admin
+  type: folder
+  seq: 2
+
+request:
+  auth: inherit
+  variables:
+    - name: session
+      value: OKEUqk_HmvdwF-LRZVt3lXx0JXSEm4-7VTeudXct2m0

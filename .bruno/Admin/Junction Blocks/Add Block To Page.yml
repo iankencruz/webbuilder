@@ -1,0 +1,34 @@
+info:
+  name: Add Block To Page
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: http://localhost:8080/api/pages/:id/blocks
+  params:
+    - name: id
+      value: "2"
+      type: path
+  body:
+    type: json
+    data: |-
+      {
+        "block_id": {{block_id}},
+        "block_collection": "{{block_collection}}",
+        "sort_order": 0
+      }
+  auth: inherit
+
+runtime:
+  variables:
+    - name: block_id
+      value: "14"
+    - name: block_collection
+      value: rich_text
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

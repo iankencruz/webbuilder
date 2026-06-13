@@ -1,0 +1,22 @@
+info:
+  name: Delete Block from page
+  type: http
+  seq: 4
+
+http:
+  method: DELETE
+  url: http://localhost:8080/api/pages/:page_id/blocks/:junction_id
+  params:
+    - name: page_id
+      value: "2"
+      type: path
+    - name: junction_id
+      value: "9"
+      type: path
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

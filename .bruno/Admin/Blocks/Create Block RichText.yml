@@ -1,0 +1,22 @@
+info:
+  name: Create Block RichText
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: http://localhost:8080/api/blocks/rich_text
+  body:
+    type: json
+    data: |-
+      {
+        "content": "Json richtext",
+        "format": "html"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
