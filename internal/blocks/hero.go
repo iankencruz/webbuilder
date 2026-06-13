@@ -2,6 +2,7 @@ package blocks
 
 import (
 	"context"
+	"encoding/json"
 
 	"github.com/iankencruz/webbuilder/internal/database/repository"
 )
@@ -37,6 +38,10 @@ func NewHeroBlock(q *repository.Queries) *HeroBlock {
 	return &HeroBlock{
 		queries: q,
 	}
+}
+
+func (b *HeroBlock) UnmarshalJSON(data []byte) error {
+	return json.Unmarshal(data, &b.Params)
 }
 
 // Create creates a new hero block in the database using the provided parameters

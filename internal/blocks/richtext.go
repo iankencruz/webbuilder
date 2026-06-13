@@ -2,6 +2,7 @@ package blocks
 
 import (
 	"context"
+	"encoding/json"
 
 	"github.com/iankencruz/webbuilder/internal/database/repository"
 )
@@ -23,6 +24,10 @@ func NewRichTextBlock(q *repository.Queries) *RichTextBlock {
 	return &RichTextBlock{
 		queries: q,
 	}
+}
+
+func (b *RichTextBlock) UnmarshalJSON(data []byte) error {
+	return json.Unmarshal(data, &b.Params)
 }
 
 func (b *RichTextBlock) Create(ctx context.Context) (int64, error) {
