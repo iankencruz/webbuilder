@@ -8,6 +8,15 @@ import (
 	"github.com/iankencruz/webbuilder/internal/database/repository"
 )
 
+type ResolvedBlock struct {
+	JunctionID int64  `json:"junction_id"`
+	SortOrder  int32  `json:"sort_order"`
+	HideBlock  bool   `json:"hide_block"`
+	Collection string `json:"collection"`
+	BlockID    int64  `json:"block_id"`
+	Data       any    `json:"data"`
+}
+
 // Block is an interface that defines the methods for creating, retrieving,
 // updating, and deleting blocks in the application. Each block type (e.g.,
 // HeroBlock, RichTextBlock) implements this interface, allowing for a
@@ -38,14 +47,14 @@ type Repository interface {
 	ReorderPageBlocks(ctx context.Context, arg repository.ReorderPageBlocksParams) error
 }
 
-type BlockService struct {
+type Service struct {
 	queries  *repository.Queries
 	repo     Repository
 	registry map[string]BlockType
 }
 
-func NewService(logger *slog.Logger, q *repository.Queries, types []BlockType) *BlockService {
-	s := &BlockService{
+func NewService(logger *slog.Logger, q *repository.Queries, types []BlockType) *Service {
+	s := &Service{
 		queries:  q,
 		repo:     q,
 		registry: make(map[string]BlockType),
@@ -58,7 +67,7 @@ func NewService(logger *slog.Logger, q *repository.Queries, types []BlockType) *
 	return s
 }
 
-func (s *BlockService) Resolve(collection string) (Block, error) {
+func (s *Service) Resolve(collection string) (Block, error) {
 	bt, ok := s.registry[collection]
 	if !ok {
 		return nil, fmt.Errorf("block collection not found: %s", collection)
@@ -70,7 +79,7 @@ func (s *BlockService) Resolve(collection string) (Block, error) {
 
 // AddBlockToPage adds a block to a page in the database using the provided parameters and returns the newly created PagesBlock. If an error occurs during
 // the operation, it returns an error.
-func (s *BlockService) AddBlockToPage(ctx context.Context, arg repository.AddBlockToPageParams) (repository.PagesBlock, error) {
+func (s *Service) AddBlockToPage(ctx context.Context, arg repository.AddBlockToPageParams) (repository.PagesBlock, error) {
 	return s.repo.AddBlockToPage(ctx, arg)
 }
 
@@ -78,7 +87,7 @@ func (s *BlockService) AddBlockToPage(ctx context.Context, arg repository.AddBlo
 // database using the provided page ID. It returns a slice of PagesBlock if
 // successful, or an error if there is an issue with the database query or if
 // the page does not exist.
-func (s *BlockService) GetPageBlocks(ctx context.Context, pageID int64) ([]repository.PagesBlock, error) {
+func (s *Service) GetPageBlocks(ctx context.Context, pageID int64) ([]repository.PagesBlock, error) {
 	return s.repo.GetPageBlocks(ctx, pageID)
 }
 
@@ -86,14 +95,14 @@ func (s *BlockService) GetPageBlocks(ctx context.Context, pageID int64) ([]repos
 // database using the provided update parameters. It returns the updated
 // PagesBlock if successful, or an error if there is an issue with the database
 // query or if the block does not exist.
-func (s *BlockService) UpdatePageBlock(ctx context.Context, arg repository.UpdatePageBlockParams) (repository.PagesBlock, error) {
+func (s *Service) UpdatePageBlock(ctx context.Context, arg repository.UpdatePageBlockParams) (repository.PagesBlock, error) {
 	return s.repo.UpdatePageBlock(ctx, arg)
 }
 
 // DeletePageBlock removes a block from a page in the database using the
 // provided block ID. It returns an error if there is an issue with the database
 // query or if the block does not exist.
-func (s *BlockService) DeletePageBlock(ctx context.Context, id int64) error {
+func (s *Service) DeletePageBlock(ctx context.Context, id int64) error {
 	return s.repo.DeletePageBlock(ctx, id)
 }
 
@@ -101,6 +110,36 @@ func (s *BlockService) DeletePageBlock(ctx context.Context, id int64) error {
 // It returns an error if there is an issue with the database query or if any of the blocks do not exist.
 // This method allows for the dynamic reordering of blocks on a page, enabling users to customize the layout
 // of their pages by changing the order of blocks as needed.
-func (s *BlockService) ReorderPageBlocks(ctx context.Context, arg repository.ReorderPageBlocksParams) error {
+func (s *Service) ReorderPageBlocks(ctx context.Context, arg repository.ReorderPageBlocksParams) error {
 	return s.repo.ReorderPageBlocks(ctx, arg)
+}
+
+func (s *Service) GetPageBlocksResolved(ctx context.Context, pageID int64) ([]ResolvedBlock, error) {
+	junctions, err := s.repo.GetPageBlocks(ctx, pageID)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to get page blocks: %w", err)
+	}
+
+	resolved := make([]ResolvedBlock, 0, len(junctions))
+	for _, j := range junctions {
+		block, err := s.Resolve(j.BlockCollection)
+		if err != nil {
+			return nil, fmt.Errorf("Failed to resolve block collection: %w", err)
+		}
+
+		data, err := block.Get(ctx, j.BlockID)
+		if err != nil {
+			return nil, fmt.Errorf("Failed to get block data: %w", err)
+		}
+
+		resolved = append(resolved, ResolvedBlock{
+			JunctionID: j.ID,
+			SortOrder:  j.SortOrder,
+			HideBlock:  j.HideBlock,
+			Collection: j.BlockCollection,
+			BlockID:    j.BlockID,
+			Data:       data,
+		})
+	}
+	return resolved, nil
 }

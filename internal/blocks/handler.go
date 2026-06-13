@@ -11,10 +11,10 @@ import (
 
 type Handler struct {
 	logger   *slog.Logger
-	services *BlockService
+	services *Service
 }
 
-func NewHandler(log *slog.Logger, services *BlockService) *Handler {
+func NewHandler(log *slog.Logger, services *Service) *Handler {
 	return &Handler{
 		logger:   log,
 		services: services,
@@ -179,4 +179,20 @@ func (h *Handler) ReorderPageBlocks(c *echo.Context) error {
 	}
 
 	return c.NoContent(http.StatusNoContent)
+}
+
+func (h *Handler) GetPageBlocksResolved(c *echo.Context) error {
+	pageID, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		h.logger.Error("invalid page ID", "id", c.Param("id"), "error", err)
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid page ID"})
+	}
+
+	resolved, err := h.services.GetPageBlocksResolved(c.Request().Context(), pageID)
+	if err != nil {
+		h.logger.Error("failed to get resolved page blocks", "page_id", pageID, "error", err)
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "failed to get resolved page blocks"})
+	}
+
+	return c.JSON(http.StatusOK, resolved)
 }

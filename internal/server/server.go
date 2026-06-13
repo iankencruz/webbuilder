@@ -20,7 +20,7 @@ import (
 
 type services struct {
 	auth  *auth.Service
-	block *blocks.BlockService
+	block *blocks.Service
 }
 
 type handlers struct {
@@ -66,7 +66,7 @@ func New(ctx context.Context, cfg *config.Config, pool *pgxpool.Pool) *Server {
 
 	svcs := &services{
 		auth:  auth.NewService(appLogger, queries),
-		block: blocks.NewService(appLogger, queries, []blocks.BlockType{blocks.RichText}),
+		block: blocks.NewService(appLogger, queries, []blocks.BlockType{blocks.RichText, blocks.Hero}),
 	}
 
 	hdlrs := &handlers{
