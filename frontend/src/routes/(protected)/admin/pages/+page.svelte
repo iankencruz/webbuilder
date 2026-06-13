@@ -1,7 +1,7 @@
 <script lang="ts">
   import { pagesAPI } from '$lib/api/pages';
   import { goto } from '$app/navigation';
-  import type { Page } from '$lib/types';
+  import type { Page } from '$lib/types/types.js';
   import { Button } from '$lib/components/ui/button';
   import { Input } from '$lib/components/ui/input';
   import * as Dialog from '$lib/components/ui/dialog';
@@ -135,7 +135,7 @@
       columnOverrides={{ status: { cellSnippet: statusBadge } }}
       onRowAction={(action, row) => {
         if (action === 'edit') {
-          goto(`/admin/pages/${row.id}`);
+          goto(`/admin/pages/${row.slug}`);
         } else if (action === 'delete') {
           triggerDeleteConfirm(row.slug as string);
         }

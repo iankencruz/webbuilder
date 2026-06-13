@@ -1,4 +1,4 @@
-import type { User } from "$lib/types";
+import type { User } from "$lib/types/types";
 
 const state = $state({ user: null as User | null, loading: true });
 
