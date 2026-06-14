@@ -12,7 +12,7 @@ export const blocksAPI = {
   },
 
   async createBlock(collection: string, data: Record<string, unknown>): Promise<{ id: number }> {
-    const res = await fetch(`${BASE}/blocks`, {
+    const res = await fetch(`/api/blocks/${collection}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",

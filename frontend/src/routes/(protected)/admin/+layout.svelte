@@ -18,7 +18,9 @@
   <Sidebar.Provider>
     <AppSidebar />
     <Sidebar.Inset>
-      <header class="h-12 bg-card flex items-center gap-4 px-4 shrink-0">
+      <header
+        class="border-b h-12 bg-card flex items-center gap-4 px-4 shrink-0"
+      >
         <Sidebar.Trigger />
         <div class="flex items-center gap-1.5 text-sm text-muted-foreground">
           <span>Admin</span>
