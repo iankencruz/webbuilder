@@ -1,5 +1,5 @@
 -- +goose Up
-CREATE TABLE IF NOT EXISTS blocks_hero (
+CREATE TABLE IF NOT EXISTS blocks.hero (
   id BIGSERIAL PRIMARY KEY,
   heading TEXT NOT NULL,
   subheading TEXT,
@@ -11,10 +11,10 @@ CREATE TABLE IF NOT EXISTS blocks_hero (
 
 
 CREATE TRIGGER trg_blocks_hero_updated_at
-  BEFORE UPDATE ON blocks_hero
+  BEFORE UPDATE ON blocks.hero
   FOR EACH ROW
   EXECUTE FUNCTION set_updated_at();
 
 -- +goose Down
-DROP TRIGGER IF EXISTS trg_blocks_hero_updated_at ON blocks_hero;
-DROP TABLE IF EXISTS blocks_hero;
+DROP TRIGGER IF EXISTS trg_blocks_hero_updated_at ON blocks.hero;
+DROP TABLE IF EXISTS blocks.hero;

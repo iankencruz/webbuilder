@@ -1,5 +1,5 @@
 -- +goose Up
-CREATE TABLE IF NOT EXISTS blocks_richtext (
+CREATE TABLE IF NOT EXISTS blocks.richtext (
   id BIGSERIAL PRIMARY KEY,
   content TEXT NOT NULL DEFAULT '',
   format TEXT NOT NULL DEFAULT 'tiptap_json',
@@ -9,10 +9,10 @@ CREATE TABLE IF NOT EXISTS blocks_richtext (
 
 
 CREATE TRIGGER trg_blocks_richtext_updated_at
-  BEFORE UPDATE ON blocks_richtext
+  BEFORE UPDATE ON blocks.richtext
   FOR EACH ROW
   EXECUTE FUNCTION set_updated_at();
 
 -- +goose Down
-DROP TRIGGER IF EXISTS trg_blocks_richtext_updated_at ON blocks_richtext;
-DROP TABLE IF EXISTS blocks_richtext;
+DROP TRIGGER IF EXISTS trg_blocks_richtext_updated_at ON blocks.richtext;
+DROP TABLE IF EXISTS blocks.richtext;
