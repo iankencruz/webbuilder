@@ -14,6 +14,7 @@ type BlocksHero struct {
 	Subheading pgtype.Text        `db:"subheading" json:"subheading"`
 	CtaLabel   pgtype.Text        `db:"cta_label" json:"cta_label"`
 	CtaUrl     pgtype.Text        `db:"cta_url" json:"cta_url"`
+	BgImageID  pgtype.UUID        `db:"bg_image_id" json:"bg_image_id"`
 	CreatedAt  pgtype.Timestamptz `db:"created_at" json:"created_at"`
 	UpdatedAt  pgtype.Timestamptz `db:"updated_at" json:"updated_at"`
 }
@@ -46,6 +47,13 @@ type PagesBlock struct {
 	HideBlock       bool               `db:"hide_block" json:"hide_block"`
 	CreatedAt       pgtype.Timestamptz `db:"created_at" json:"created_at"`
 	UpdatedAt       pgtype.Timestamptz `db:"updated_at" json:"updated_at"`
+}
+
+type ReferenceBlockType struct {
+	Code        string             `db:"code" json:"code"`
+	Label       string             `db:"label" json:"label"`
+	Description pgtype.Text        `db:"description" json:"description"`
+	CreatedAt   pgtype.Timestamptz `db:"created_at" json:"created_at"`
 }
 
 type Session struct {

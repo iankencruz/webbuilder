@@ -10,23 +10,18 @@ CREATE TABLE IF NOT EXISTS pages (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
-CREATE INDEX IF NOT EXISTS idx_pages_slug ON pages (slug);
-CREATE
-OR REPLACE FUNCTION set_updated_at() RETURNS TRIGGER AS
-$$
-BEGIN
-NEW.updated_at = NOW();
-RETURN NEW;
-END;
-$$
-LANGUAGE plpgsql;
-CREATE TRIGGER trg_pages_updated_at BEFORE
-UPDATE
-    ON pages FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
--- +goose StatementEnd
--- +goose Down
+CREATE INDEX IF NOT EXISTS idx_pages_slug ON pages (slug);
+
 DROP TRIGGER IF EXISTS trg_pages_updated_at ON pages;
-DROP FUNCTION IF EXISTS set_updated_at();
+CREATE TRIGGER trg_pages_updated_at 
+  BEFORE UPDATE ON pages FOR EACH ROW
+  EXECUTE FUNCTION public.set_updated_at();
+-- +goose StatementEnd
+
+-- +goose Down
+-- +goose StatementBegin
+DROP TRIGGER IF EXISTS trg_pages_updated_at ON pages;
 DROP INDEX IF EXISTS idx_pages_slug;
 DROP TABLE IF EXISTS pages;
+-- +goose StatementEnd

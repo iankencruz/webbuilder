@@ -1,6 +1,6 @@
 -- name: CreateRichTextBlock :one
 INSERT INTO
-    blocks_richtext (content, format)
+    blocks.richtext (content, format)
 VALUES
     (@content, @format)
 RETURNING
@@ -9,12 +9,12 @@ RETURNING
 SELECT
     *
 FROM
-    blocks_richtext
+    blocks.richtext
 WHERE
     id = @id;
 -- name: UpdateRichTextBlock :one
 UPDATE
-    blocks_richtext
+    blocks.richtext
 SET
     content = @content,
     format = @format
@@ -24,6 +24,6 @@ RETURNING
     *;
 -- name: DeleteRichTextBlock :exec
 DELETE FROM
-    blocks_richtext
+    blocks.richtext
 WHERE
     id = @id;

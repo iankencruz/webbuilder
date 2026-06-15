@@ -1,6 +1,6 @@
 -- name: CreateHeroBlock :one
 INSERT INTO
-    blocks_hero (
+    blocks.hero (
         heading,
         subheading,
         cta_label,
@@ -19,12 +19,12 @@ RETURNING
 SELECT
     *
 FROM
-    blocks_hero
+    blocks.hero
 WHERE
     id = @id;
 -- name: UpdateHeroBlock :one
 UPDATE
-    blocks_hero
+    blocks.hero
 SET
     heading = @heading,
     subheading = @subheading,
@@ -36,6 +36,6 @@ RETURNING
     *;
 -- name: DeleteHeroBlock :exec
 DELETE FROM
-    blocks_hero
+    blocks.hero
 WHERE
     id = @id;

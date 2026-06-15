@@ -15,11 +15,11 @@
   let { data } = $props();
 
   // Handle local mutations using a mutable state tracking data updates
-  let localPages = $derived<Page[]>(data.pages);
+  let localPages = $derived<Page[]>(data.pages ?? []);
 
   // React to fresh parent data updates gracefully
   $effect(() => {
-    localPages = data.pages;
+    localPages = data?.pages ?? [];
   });
 
   let open = $state(false);
@@ -51,7 +51,7 @@
       open = false;
       title = '';
       slug = '';
-      goto(`/admin/pages/${page.id}`);
+      goto(`/admin/pages/${page.slug}`);
     } catch (e) {
       error = e instanceof Error ? e.message : 'Something went wrong';
     } finally {
