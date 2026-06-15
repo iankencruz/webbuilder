@@ -26,6 +26,7 @@ type Block interface {
 	Get(ctx context.Context, id int64) (any, error)
 	Update(ctx context.Context) (any, error)
 	Delete(ctx context.Context, id int64) error
+	SetID(id int64)
 }
 
 // BlockType is a struct that represents a block type in the application.
@@ -41,6 +42,7 @@ type BlockType struct {
 // --- Service ---
 type Repository interface {
 	AddBlockToPage(ctx context.Context, arg repository.AddBlockToPageParams) (repository.PagesBlock, error)
+	GetPageBlock(ctx context.Context, id int64) (repository.PagesBlock, error)
 	GetPageBlocks(ctx context.Context, pageID int64) ([]repository.PagesBlock, error)
 	UpdatePageBlock(ctx context.Context, arg repository.UpdatePageBlockParams) (repository.PagesBlock, error)
 	DeletePageBlock(ctx context.Context, id int64) error
@@ -102,8 +104,24 @@ func (s *Service) UpdatePageBlock(ctx context.Context, arg repository.UpdatePage
 // DeletePageBlock removes a block from a page in the database using the
 // provided block ID. It returns an error if there is an issue with the database
 // query or if the block does not exist.
-func (s *Service) DeletePageBlock(ctx context.Context, id int64) error {
-	return s.repo.DeletePageBlock(ctx, id)
+func (s *Service) DeletePageBlock(ctx context.Context, junctionID int64) error {
+	// fetch junction row to get block_id + collection
+	junction, err := s.queries.GetPageBlock(ctx, junctionID)
+	if err != nil {
+		return err
+	}
+
+	block, err := s.Resolve(junction.BlockCollection)
+	if err != nil {
+		return err
+	}
+
+	// delette typed block row
+	if err := block.Delete(ctx, junction.BlockID); err != nil {
+		return err
+	}
+
+	return s.repo.DeletePageBlock(ctx, junctionID)
 }
 
 // ReorderPageBlocks updates the order of blocks on a page in the database using the provided reorder parameters.

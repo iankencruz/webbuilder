@@ -45,7 +45,7 @@ func (h *Handler) CreateBlock(c *echo.Context) error {
 }
 
 func (h *Handler) GetBlock(c *echo.Context) error {
-	collection := c.Param("type")
+	collection := c.Param("collection")
 	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
 	if err != nil {
 		h.logger.Error("invalid block ID", "id", c.Param("id"), "error", err)
@@ -68,7 +68,7 @@ func (h *Handler) GetBlock(c *echo.Context) error {
 }
 
 func (h *Handler) UpdateBlock(c *echo.Context) error {
-	collection := c.Param("type")
+	collection := c.Param("collection")
 	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
 	if err != nil {
 		h.logger.Error("invalid block ID", "id", c.Param("id"), "error", err)
@@ -85,6 +85,8 @@ func (h *Handler) UpdateBlock(c *echo.Context) error {
 		h.logger.Error("failed to bind request body", "error", err)
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid request body"})
 	}
+
+	block.SetID(id)
 
 	result, err := block.Update(c.Request().Context())
 	if err != nil {

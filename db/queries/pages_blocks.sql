@@ -46,3 +46,12 @@ SET
     sort_order = @sort_order
 WHERE
     id = @id;
+
+
+-- name: GetPageBlock :one
+SELECT
+    *
+FROM
+    pages_blocks
+WHERE
+    id = @id;

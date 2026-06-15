@@ -22,7 +22,7 @@ export interface ResolvedBlock {
   junction_id: number;
   sort_order: number;
   hide_block: boolean;
-  collection: "hero" | "rich_text";
+  collection: "hero" | "richtext";
   block_id: number;
   data: BlockData;
 }

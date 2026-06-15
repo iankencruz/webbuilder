@@ -68,6 +68,31 @@ func (q *Queries) DeletePageBlock(ctx context.Context, id int64) error {
 	return err
 }
 
+const getPageBlock = `-- name: GetPageBlock :one
+SELECT
+    id, page_id, block_id, block_collection, sort_order, hide_block, created_at, updated_at
+FROM
+    pages_blocks
+WHERE
+    id = $1
+`
+
+func (q *Queries) GetPageBlock(ctx context.Context, id int64) (PagesBlock, error) {
+	row := q.db.QueryRow(ctx, getPageBlock, id)
+	var i PagesBlock
+	err := row.Scan(
+		&i.ID,
+		&i.PageID,
+		&i.BlockID,
+		&i.BlockCollection,
+		&i.SortOrder,
+		&i.HideBlock,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const getPageBlocks = `-- name: GetPageBlocks :many
 SELECT
     id, page_id, block_id, block_collection, sort_order, hide_block, created_at, updated_at

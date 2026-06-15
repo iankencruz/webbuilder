@@ -4,7 +4,7 @@ import RichTextBlockEditor from "$lib/blocks/RichTextBlockEditor.svelte";
 
 const registry = {
   hero: HeroBlockEditor,
-  rich_text: RichTextBlockEditor,
+  richtext: RichTextBlockEditor,
 } satisfies Record<string, Component<any>>;
 
 export const blockRegistry = registry;

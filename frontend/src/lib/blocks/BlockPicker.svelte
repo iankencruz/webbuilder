@@ -19,7 +19,7 @@
 
   const paletteItems: { collection: BlockCollection; label: string }[] = [
     { collection: 'hero', label: 'Hero' },
-    { collection: 'rich_text', label: 'Rich Text' },
+    { collection: 'richtext', label: 'Rich Text' },
   ];
 
   let search = $state('');

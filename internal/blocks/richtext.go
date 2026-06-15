@@ -8,16 +8,16 @@ import (
 )
 
 var RichText = BlockType{
-	Collection: "rich_text",
+	Collection: "richtext",
 	New: func(q *repository.Queries) Block {
 		return NewRichTextBlock(q)
 	},
 }
 
 type RichTextBlock struct {
-	queries      *repository.Queries
-	Params       repository.CreateRichTextBlockParams
-	UpdateParams repository.UpdateRichTextBlockParams
+	queries *repository.Queries
+	Params  repository.CreateRichTextBlockParams
+	id      int64
 }
 
 func NewRichTextBlock(q *repository.Queries) *RichTextBlock {
@@ -30,8 +30,14 @@ func (b *RichTextBlock) UnmarshalJSON(data []byte) error {
 	return json.Unmarshal(data, &b.Params)
 }
 
+func (b *RichTextBlock) SetID(id int64) {
+	b.id = id
+}
+
 func (b *RichTextBlock) Create(ctx context.Context) (int64, error) {
-	result, err := b.queries.CreateRichTextBlock(ctx, b.Params)
+	result, err := b.queries.CreateRichTextBlock(ctx, repository.CreateRichTextBlockParams{
+		Content: b.Params.Content,
+	})
 	if err != nil {
 		return 0, err
 	}
@@ -43,9 +49,13 @@ func (b *RichTextBlock) Get(ctx context.Context, id int64) (any, error) {
 }
 
 func (b *RichTextBlock) Update(ctx context.Context) (any, error) {
-	return b.queries.UpdateRichTextBlock(ctx, b.UpdateParams)
+	return b.queries.UpdateRichTextBlock(ctx, repository.UpdateRichTextBlockParams{
+		ID:      b.id,
+		Content: b.Params.Content,
+		Format:  b.Params.Format,
+	})
 }
 
 func (b *RichTextBlock) Delete(ctx context.Context, id int64) error {
-	return b.queries.DeleteHeroBlock(ctx, id)
+	return b.queries.DeleteRichTextBlock(ctx, id)
 }

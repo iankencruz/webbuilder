@@ -24,9 +24,9 @@ var Hero = BlockType{
 // creating and updating hero blocks. This struct provides methods for creating,
 // retrieving, updating, and deleting hero blocks in the database.
 type HeroBlock struct {
-	queries      *repository.Queries
-	Params       repository.CreateHeroBlockParams
-	UpdateParams repository.UpdateHeroBlockParams
+	queries *repository.Queries
+	Params  repository.CreateHeroBlockParams
+	id      int64
 }
 
 // NewHeroBlock creates a new instance of HeroBlock with the provided
@@ -44,11 +44,20 @@ func (b *HeroBlock) UnmarshalJSON(data []byte) error {
 	return json.Unmarshal(data, &b.Params)
 }
 
+func (b *HeroBlock) SetID(id int64) {
+	b.id = id
+}
+
 // Create creates a new hero block in the database using the provided parameters
 // and returns the ID of the newly created block. If an error occurs during
 // creation, it returns 0 and the error.
 func (b *HeroBlock) Create(ctx context.Context) (int64, error) {
-	result, err := b.queries.CreateHeroBlock(ctx, b.Params)
+	result, err := b.queries.CreateHeroBlock(ctx, repository.CreateHeroBlockParams{
+		Heading:    b.Params.Heading,
+		Subheading: b.Params.Subheading,
+		CtaLabel:   b.Params.CtaLabel,
+		CtaUrl:     b.Params.CtaUrl,
+	})
 	if err != nil {
 		return 0, err
 	}
@@ -67,7 +76,13 @@ func (b *HeroBlock) Get(ctx context.Context, id int64) (any, error) {
 // successful, or an error if the block does not exist or if there is an issue
 // with the database query.
 func (b *HeroBlock) Update(ctx context.Context) (any, error) {
-	return b.queries.UpdateHeroBlock(ctx, b.UpdateParams)
+	return b.queries.UpdateHeroBlock(ctx, repository.UpdateHeroBlockParams{
+		ID:         b.id,
+		Heading:    b.Params.Heading,
+		Subheading: b.Params.Subheading,
+		CtaLabel:   b.Params.CtaLabel,
+		CtaUrl:     b.Params.CtaUrl,
+	})
 }
 
 // Delete removes a hero block from the database using the provided ID. It

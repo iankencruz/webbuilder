@@ -24,7 +24,7 @@
     debounceTimer = setTimeout(async () => {
       saveStatus = 'saving';
       try {
-        (await blocksAPI.updateBlock('rich_text', block.block_id, {
+        (await blocksAPI.updateBlock('richtext', block.block_id, {
           content,
           format,
         }),

@@ -53,7 +53,7 @@
           cta_label: '',
           cta_url: '',
         },
-        rich_text: {
+        richtext: {
           content: '',
           format: 'html',
         },
