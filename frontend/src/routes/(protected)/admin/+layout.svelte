@@ -1,17 +1,10 @@
 <script lang="ts">
   import { auth } from '$lib/hooks/auth.svelte';
-  import { goto } from '$app/navigation';
   import { page } from '$app/state';
   import * as Sidebar from '$lib/components/ui/sidebar/index';
   import AppSidebar from '$lib/components/app-sidebar.svelte';
 
   let { children } = $props();
-
-  $effect(() => {
-    if (!auth.loading && !auth.user) {
-      goto('/login');
-    }
-  });
 </script>
 
 {#if auth.user}
