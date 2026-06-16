@@ -1,18 +1,28 @@
 <script lang="ts">
+  import * as Item from '$lib/components/ui/item/index.js';
+  import { Button } from '$lib/components/ui/button/index.js';
+  import BadgeCheckIcon from '@lucide/svelte/icons/badge-check';
+  import ChevronRightIcon from '@lucide/svelte/icons/chevron-right';
   let {
     label,
+    description,
     onClick,
   }: {
     label: string;
+    description: string;
     onClick: () => void;
   } = $props();
 </script>
 
-<button
+<Button
+  variant="outline"
   onclick={onClick}
-  class="w-full text-left rounded-md border
-    border-border bg-card px-3 py-2 text-sm
-    font-medium hover:bg-accent transition-colors"
+  class="w-full text-ellipsis  p-4 py-8"
 >
-  {label}
-</button>
+  <Item.Root>
+    <Item.Content>
+      <Item.Title>{label}</Item.Title>
+      <Item.Description class="w-ffull">{description}</Item.Description>
+    </Item.Content>
+  </Item.Root>
+</Button>

@@ -22,6 +22,7 @@ export interface ResolvedBlock {
   junction_id: number;
   sort_order: number;
   hide_block: boolean;
+  collection: BlockCollection;
   block_id: number;
   data: BlockData;
 }
@@ -32,3 +33,4 @@ export interface Blocks {
   description: string;
   created_at: string;
 }
+export type BlockCollection = string;

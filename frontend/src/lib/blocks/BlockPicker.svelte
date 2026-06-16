@@ -5,8 +5,7 @@
   import * as Popover from '$lib/components/ui/popover';
   import * as ScrollArea from '$lib/components/ui/scroll-area';
   import PlusIcon from '@lucide/svelte/icons/plus';
-  import type { BlockCollection } from './registry';
-  import type { Blocks } from '$lib/types/blocks';
+  import type { BlockCollection, Blocks } from '$lib/types/blocks';
 
   let {
     data,
@@ -40,7 +39,11 @@
     <Input type="text" bind:value={search} placeholder="Search blocks…" />
     <div class="space-y-2">
       {#each filtered as item (item.code)}
-        <PaletteItem label={item.label} onClick={() => pick(item.code)} />
+        <PaletteItem
+          label={item.label}
+          description={item.description}
+          onClick={() => pick(item.code)}
+        />
       {:else}
         <p class="text-sm text-muted-foreground px-1">No blocks found.</p>
       {/each}
@@ -76,7 +79,11 @@
       <ScrollArea.Root class="h-64">
         <div class="p-3 space-y-2">
           {#each filtered as item (item.code)}
-            <PaletteItem label={item.label} onClick={() => pick(item.code)} />
+            <PaletteItem
+              label={item.label}
+              description={item.description}
+              onClick={() => pick(item.code)}
+            />
           {:else}
             <p class="text-sm text-muted-foreground px-1">No blocks found.</p>
           {/each}

@@ -1,12 +1,9 @@
+// registry.ts
 import type { Component } from "svelte";
 import HeroBlockEditor from "$lib/blocks/HeroBlockEditor.svelte";
 import RichTextBlockEditor from "$lib/blocks/RichTextBlockEditor.svelte";
 
-const registry = {
+export const blockRegistry: Record<string, Component<any>> = {
   hero: HeroBlockEditor,
   richtext: RichTextBlockEditor,
-} satisfies Record<string, Component<any>>;
-
-export const blockRegistry = registry;
-
-export type BlockCollection = keyof typeof blockRegistry;
+};

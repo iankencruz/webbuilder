@@ -1,6 +1,10 @@
 <script lang="ts">
   import { blocksAPI } from '$lib/api/blocks';
-  import type { Blocks, ResolvedBlock } from '$lib/types/blocks';
+  import type {
+    BlockCollection,
+    Blocks,
+    ResolvedBlock,
+  } from '$lib/types/blocks';
   import { untrack } from 'svelte';
   import {
     DndContext,
@@ -16,7 +20,7 @@
   } from '@dnd-kit-svelte/sortable';
   import SortableBlockItem from '$lib/blocks/SortableBlockItem.svelte';
   import BlockPicker from '$lib/blocks/BlockPicker.svelte';
-  import { blockRegistry, type BlockCollection } from '$lib/blocks/registry';
+  import { blockRegistry } from '$lib/blocks/registry.js';
 
   let { data } = $props();
 
@@ -142,7 +146,7 @@
           text-center text-muted-foreground space-y-4"
         >
           <p>No blocks yet.</p>
-          <BlockPicker onAdd={(c) => addBlock(c, 0)} />
+          <BlockPicker data={blocks} onAdd={(c) => addBlock(c, 0)} />
         </div>
       {:else}
         <DndContext
@@ -165,7 +169,7 @@
                     <Component {block} />
                   {:else}
                     <p class="text-sm text-muted-foreground">
-                      Unknown block: {block.collection}
+                      Unknown block: {block.block_id}
                     </p>
                   {/if}
                 </SortableBlockItem>
@@ -186,7 +190,7 @@
       <h2 class="text-sm font-semibold">Blocks</h2>
     </div>
     <div class="flex-1 overflow-y-auto p-4">
-      <BlockPicker onAdd={(c) => addBlock(c)} expanded />
+      <BlockPicker data={blocks} onAdd={(c) => addBlock(c)} expanded />
     </div>
   </aside>
 </div>
