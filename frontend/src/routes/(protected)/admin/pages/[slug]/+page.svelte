@@ -1,6 +1,6 @@
 <script lang="ts">
   import { blocksAPI } from '$lib/api/blocks';
-  import type { ResolvedBlock } from '$lib/types/blocks';
+  import type { Blocks, ResolvedBlock } from '$lib/types/blocks';
   import { untrack } from 'svelte';
   import {
     DndContext,
@@ -20,10 +20,13 @@
 
   let { data } = $props();
 
-  let blocks = $state<ResolvedBlock[]>(untrack(() => data.blocks));
+  let pageBlocks = $state<ResolvedBlock[]>(untrack(() => data.pageBlocks));
   let pageId = $derived(data.page.id);
 
-  let blockIds = $derived(blocks.map((b) => b.junction_id));
+  let blocks = $derived<Blocks[]>(untrack(() => data.blocks));
+  console.log('blocks', blocks);
+
+  let blockIds = $derived(pageBlocks.map((b) => b.junction_id));
 
   let adding = $state(false);
 
@@ -36,7 +39,7 @@
   async function persistOrder() {
     await blocksAPI.reorder(
       pageId,
-      blocks.map((b) => ({
+      pageBlocks.map((b) => ({
         id: b.junction_id,
         sort_order: b.sort_order,
       })),
@@ -64,7 +67,7 @@
         defaults[collection],
       );
 
-      const insertIndex = atIndex ?? blocks.length;
+      const insertIndex = atIndex ?? pageBlocks.length;
 
       const junction = await blocksAPI.addToPage(
         pageId,
@@ -82,11 +85,11 @@
         data: defaults[collection] as any,
       };
 
-      const next = [...blocks];
+      const next = [...pageBlocks];
       next.splice(insertIndex, 0, newBlock);
-      blocks = next.map((b, i) => ({ ...b, sort_order: i }));
+      pageBlocks = next.map((b, i) => ({ ...b, sort_order: i }));
 
-      if (insertIndex !== blocks.length - 1) {
+      if (insertIndex !== pageBlocks.length - 1) {
         await persistOrder();
       }
     } finally {
@@ -96,18 +99,18 @@
 
   async function removeBlock(junctionId: number) {
     await blocksAPI.deleteFromPage(pageId, junctionId);
-    blocks = blocks.filter((b) => b.junction_id !== junctionId);
+    pageBlocks = pageBlocks.filter((b) => b.junction_id !== junctionId);
   }
 
   async function handleDragEnd(event: any) {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
 
-    const oldIndex = blocks.findIndex((b) => b.junction_id === active.id);
-    const newIndex = blocks.findIndex((b) => b.junction_id === over.id);
+    const oldIndex = pageBlocks.findIndex((b) => b.junction_id === active.id);
+    const newIndex = pageBlocks.findIndex((b) => b.junction_id === over.id);
     if (oldIndex === -1 || newIndex === -1) return;
 
-    blocks = arrayMove(blocks, oldIndex, newIndex).map((b, i) => ({
+    pageBlocks = arrayMove(pageBlocks, oldIndex, newIndex).map((b, i) => ({
       ...b,
       sort_order: i,
     }));
@@ -132,7 +135,7 @@
         </span>
       </div>
 
-      {#if blocks.length === 0}
+      {#if pageBlocks.length === 0}
         <div
           class="border-2 border-dashed
           border-border rounded-lg p-16
@@ -152,7 +155,7 @@
             strategy={verticalListSortingStrategy}
           >
             <div class="space-y-4 bg-slate-100 p-4">
-              {#each blocks as block (block.junction_id)}
+              {#each pageBlocks as block (block.junction_id)}
                 {@const Component = blockRegistry[block.collection]}
                 <SortableBlockItem
                   id={block.junction_id}

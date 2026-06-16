@@ -44,6 +44,16 @@ func (h *Handler) CreateBlock(c *echo.Context) error {
 	return c.JSON(http.StatusCreated, map[string]any{"id": id})
 }
 
+func (h *Handler) ListBlocks(c *echo.Context) error {
+	blocks, err := h.services.queries.ListBlocks(c.Request().Context())
+	if err != nil {
+		h.logger.Error("failed to list blocks", "error", err)
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "failed to list blocks"})
+	}
+
+	return c.JSON(http.StatusOK, blocks)
+}
+
 func (h *Handler) GetBlock(c *echo.Context) error {
 	collection := c.Param("collection")
 	id, err := strconv.ParseInt(c.Param("id"), 10, 64)

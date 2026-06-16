@@ -40,6 +40,7 @@ func (s *Server) registerRoutes() {
 
 	// Blocks (type-specific)
 	block := api.Group("/blocks", authmiddleware.RequireAuth(s.sessionManager))
+	block.GET("/list", s.handlers.block.ListBlocks)
 	block.POST("/:collection", s.handlers.block.CreateBlock)
 	block.GET("/:collection/:id", s.handlers.block.GetBlock)
 	block.PUT("/:collection/:id", s.handlers.block.UpdateBlock)

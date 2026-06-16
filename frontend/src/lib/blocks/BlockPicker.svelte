@@ -6,27 +6,25 @@
   import * as ScrollArea from '$lib/components/ui/scroll-area';
   import PlusIcon from '@lucide/svelte/icons/plus';
   import type { BlockCollection } from './registry';
+  import type { Blocks } from '$lib/types/blocks';
 
   let {
+    data,
     onAdd,
     compact = false,
     expanded = false,
   }: {
+    data: Blocks[];
     onAdd: (collection: BlockCollection) => void;
     compact?: boolean;
     expanded?: boolean;
   } = $props();
 
-  const paletteItems: { collection: BlockCollection; label: string }[] = [
-    { collection: 'hero', label: 'Hero' },
-    { collection: 'richtext', label: 'Rich Text' },
-  ];
-
   let search = $state('');
   let open = $state(false);
 
   let filtered = $derived(
-    paletteItems.filter((item) =>
+    data.filter((item) =>
       item.label.toLowerCase().includes(search.toLowerCase()),
     ),
   );
@@ -41,8 +39,8 @@
   <div class="space-y-3">
     <Input type="text" bind:value={search} placeholder="Search blocks…" />
     <div class="space-y-2">
-      {#each filtered as item (item.collection)}
-        <PaletteItem label={item.label} onClick={() => pick(item.collection)} />
+      {#each filtered as item (item.code)}
+        <PaletteItem label={item.label} onClick={() => pick(item.code)} />
       {:else}
         <p class="text-sm text-muted-foreground px-1">No blocks found.</p>
       {/each}
@@ -77,11 +75,8 @@
 
       <ScrollArea.Root class="h-64">
         <div class="p-3 space-y-2">
-          {#each filtered as item (item.collection)}
-            <PaletteItem
-              label={item.label}
-              onClick={() => pick(item.collection)}
-            />
+          {#each filtered as item (item.code)}
+            <PaletteItem label={item.label} onClick={() => pick(item.code)} />
           {:else}
             <p class="text-sm text-muted-foreground px-1">No blocks found.</p>
           {/each}

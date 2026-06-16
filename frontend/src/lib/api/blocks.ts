@@ -1,4 +1,6 @@
-import type { ResolvedBlock } from "$lib/types/blocks";
+import type { Blocks, ResolvedBlock } from "$lib/types/blocks";
+import type { Page } from "@sveltejs/kit";
+import type { BlockList } from "node:net";
 
 const BASE = "/api/pages";
 
@@ -7,6 +9,14 @@ export const blocksAPI = {
     const res = await fetch(`${BASE}/${pageId}/blocks/resolved`, { credentials: "include" });
     if (!res.ok) {
       throw new Error(`Failed to fetch resolved blocks for page ${pageId}: ${res.statusText}`);
+    }
+    return res.json();
+  },
+
+  async listBlocks(fetch: typeof globalThis.fetch): Promise<Blocks[]> {
+    const res = await fetch(`/api/blocks/list`, { credentials: "include" });
+    if (!res.ok) {
+      throw new Error(`Failed to fetch blocks: ${res.statusText}`);
     }
     return res.json();
   },
