@@ -7,6 +7,7 @@
   import * as Sidebar from '$lib/components/ui/sidebar/index';
   import * as DropdownMenu from '$lib/components/ui/dropdown-menu/index';
   import ChevronUpIcon from '@lucide/svelte/icons/chevron-up';
+  import Separator from './ui/separator/separator.svelte';
 
   const isActive = (href: string) => page.url.pathname === href;
 </script>

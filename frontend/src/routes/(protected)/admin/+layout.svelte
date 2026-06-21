@@ -2,7 +2,7 @@
   import { auth } from '$lib/hooks/auth.svelte';
   import { page } from '$app/state';
   import * as Sidebar from '$lib/components/ui/sidebar/index';
-  import AppSidebar from '$lib/components/app-sidebar.svelte';
+  import AppSidebar from '$lib/components/AppSidebar.svelte';
 
   let { children } = $props();
 </script>
