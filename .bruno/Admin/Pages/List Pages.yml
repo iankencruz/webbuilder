@@ -6,6 +6,9 @@ info:
 http:
   method: GET
   url: http://localhost:8080/api/pages
+  headers:
+    - name: Cookie
+      value: session=_IQi5RG1Mqj6vWrSCgultRX08k7IGI3dK2buyv1q8A8
   auth: inherit
 
 settings:
