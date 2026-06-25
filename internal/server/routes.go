@@ -34,6 +34,7 @@ func (s *Server) registerRoutes() {
 	// Page Blocks (junction)
 	blocks := pages.Group("/:id/blocks")
 	blocks.GET("/resolved", s.handlers.block.GetPageBlocksResolved)
+	blocks.PATCH("/reorder", s.handlers.block.ReorderPageBlocks)
 	blocks.POST("", s.handlers.block.AddBlockToPage)
 	blocks.PUT("/:junctionID", s.handlers.block.UpdatePageBlock)
 	blocks.DELETE("/:junctionID", s.handlers.block.DeletePageBlock)
