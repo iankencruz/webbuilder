@@ -45,7 +45,7 @@ func Load() *Config {
 		DatabaseURL:     getEnv("DATABASE_URL", "postgres://user:pass@localhost:5432/app?sslmode=disable"),
 		MigrationsDir:   getEnv("MIGRATIONS_DIR", "db/migrations"),
 		SessionLifetime: getEnvDuration("SESSION_LIFETIME_HOURS", 24) * time.Hour,
-		SessionSecure:   getEnvBool("SESSION_COOKIE_SECURE", true),
+		SessionSecure:   getEnvBool("SESSION_COOKIE_SECURE", false),
 		SessionCookie:   getEnv("SESSION_COOKIE_NAME", "session"),
 
 		Google: GoogleConfig{
